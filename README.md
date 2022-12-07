@@ -1,2 +1,2 @@
 # iotics-java-agent
-iotics agent framework
+IOTICS agent framework for Java
