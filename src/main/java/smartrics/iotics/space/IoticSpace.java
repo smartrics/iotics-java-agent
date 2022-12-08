@@ -16,6 +16,10 @@ public class IoticSpace {
         this.endpoints = this.serviceRegistry.find();
     }
 
+    public HostEndpoints endpoints() {
+        return this.endpoints;
+    }
+
     @Override
     public String toString() {
         return "IoticSpace{" +

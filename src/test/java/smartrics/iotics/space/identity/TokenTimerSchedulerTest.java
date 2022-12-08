@@ -50,7 +50,6 @@ class TokenTimerSchedulerTest {
     private TokenTimerScheduler newTTS(long millisDuration) {
         return new TokenTimerScheduler(
                 identityManager,
-                new Timer("token-scheduler"),
                 Duration.of(millisDuration, ChronoUnit.MILLIS));
 
     }
