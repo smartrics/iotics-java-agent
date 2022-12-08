@@ -50,9 +50,9 @@
         <dependency>
             <groupId>com.iotics</groupId>
             <artifactId>java-idsdk</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>1.1-SNAPSHOT</version>
             <scope>system</scope>
-            <systemPath>${project.basedir}/lib/java-idsdk-1.0-SNAPSHOT.jar</systemPath>
+            <systemPath>${project.basedir}/lib/java-idsdk-1.1-SNAPSHOT.jar</systemPath>
         </dependency>
 
         <!-- TEST -->
