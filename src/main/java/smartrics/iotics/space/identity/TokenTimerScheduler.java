@@ -14,8 +14,8 @@ public class TokenTimerScheduler implements TokenScheduler {
     private final Duration duration;
     private final AtomicReference<String> validToken;
 
-    public TokenTimerScheduler(IdentityManager identityManager, Timer timer, Duration duration) {
-        this.timer = timer;
+    public TokenTimerScheduler(IdentityManager identityManager, Duration duration) {
+        this.timer = new Timer("token-timer-scheduler");
         this.identityManager = identityManager;
         this.validToken = new AtomicReference<>();
         this.duration = duration;
