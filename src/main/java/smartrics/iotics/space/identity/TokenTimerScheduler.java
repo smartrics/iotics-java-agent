@@ -7,17 +7,17 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class TimerScheduler implements TokenScheduler {
+public class TokenTimerScheduler implements TokenScheduler {
 
     private final Timer timer;
     private final IdentityManager identityManager;
     private final Duration duration;
-    private AtomicReference<String> validToken;
+    private final AtomicReference<String> validToken;
 
-    public TimerScheduler(IdentityManager identityManager, Timer timer, Duration duration) {
+    public TokenTimerScheduler(IdentityManager identityManager, Timer timer, Duration duration) {
         this.timer = timer;
         this.identityManager = identityManager;
-        this.validToken = new AtomicReference<>("");
+        this.validToken = new AtomicReference<>();
         this.duration = duration;
     }
 
@@ -32,7 +32,7 @@ public class TimerScheduler implements TokenScheduler {
                 // the lower the security - if token is stolen the thief can impersonate
                 validToken.set(identityManager.newAuthenticationToken(duration));
             }
-        }, 0, duration.toMillis() - 100);
+        }, 0, duration.toMillis() - 10);
 
     }
 
@@ -43,7 +43,11 @@ public class TimerScheduler implements TokenScheduler {
 
     @Override
     public String validToken() {
-        return validToken.get();
+        String value = validToken.get();
+        if(value == null) {
+            throw new IllegalStateException("not scheduled");
+        }
+        return value;
     }
 
 }

@@ -1,7 +1,8 @@
-package smartrics.iotics.space;
+package smartrics.iotics.space.grpc;
 
 import com.iotics.sdk.identity.IdentityManager;
 import io.grpc.*;
+import smartrics.iotics.space.identity.TokenScheduler;
 
 import java.time.Duration;
 import java.util.Timer;
@@ -11,60 +12,10 @@ import java.util.concurrent.atomic.AtomicReference;
 import static io.grpc.Metadata.ASCII_STRING_MARSHALLER;
 
 public record TokenInjectorClientInterceptor(
-        smartrics.iotics.space.TokenInjectorClientInterceptor.Scheduler scheduler) implements ClientInterceptor {
+        TokenScheduler scheduler) implements ClientInterceptor {
 
-    interface Scheduler {
-        void schedule();
-
-        void cancel();
-
-        String validToken();
-    }
-
-    public static class TimerScheduler implements Scheduler {
-
-        private final Timer timer;
-        private final IdentityManager identityManager;
-        private final Duration duration;
-        private AtomicReference<String> validToken;
-
-        public TimerScheduler(IdentityManager identityManager, Timer timer, Duration duration) {
-            this.timer = timer;
-            this.identityManager = identityManager;
-            this.validToken = new AtomicReference<>("");
-            this.duration = duration;
-        }
-
-        @Override
-        public void schedule() {
-            this.timer.schedule(new TimerTask() {
-                @Override
-                public void run() {
-                    // gets a token for thisI am gettin an user
-
-                    // a token is used to auth this agent and user - the token has a validity. The longer the validity
-                    // the lower the security - if token is stolen the thief can impersonate
-                    validToken.set(identityManager.newAuthenticationToken(duration));
-                }
-            }, 0, duration.toMillis() - 100);
-
-        }
-
-        @Override
-        public void cancel() {
-            this.timer.cancel();
-        }
-
-        @Override
-        public String validToken() {
-            return validToken.get();
-        }
-
-    }
-
-    public TokenInjectorClientInterceptor(Scheduler scheduler) {
+    public TokenInjectorClientInterceptor(TokenScheduler scheduler) {
         this.scheduler = scheduler;
-        this.scheduler.schedule();
     }
 
     public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(MethodDescriptor<ReqT, RespT> method, CallOptions callOptions, Channel next) {
