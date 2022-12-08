@@ -21,7 +21,7 @@ class IoticSpaceTest {
     }
 
     @Test
-    public void findsHostEndpointsFromServiceRegistry() throws IOException {
+    public void whenInitialisedFindsHostEndpointsFromServiceRegistry() throws IOException {
         HostEndpoints e = newEndpoints();
         when(mockServiceRegistry.find()).thenReturn(e);
         new IoticSpace(mockServiceRegistry).initialise();
