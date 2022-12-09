@@ -48,7 +48,8 @@
 
         <!-- IOTICS -->
         <dependency>
-            <groupId>com.iotics</groupId>
+            <!-- requires manual installation of the identity sdk and the .so in src/main/resources -->
+            <groupId>com.iotics.sdk.identity</groupId>
             <artifactId>java-idsdk</artifactId>
             <version>1.1-SNAPSHOT</version>
             <scope>system</scope>
