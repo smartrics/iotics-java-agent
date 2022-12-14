@@ -1,11 +1,14 @@
 package smartrics.iotics.space.grpc;
 
 import com.iotics.sdk.identity.SimpleIdentityManager;
+import io.grpc.ClientInterceptor;
 import io.grpc.ManagedChannelBuilder;
 import smartrics.iotics.space.identity.TokenScheduler;
 import smartrics.iotics.space.identity.TokenTimerScheduler;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 
 public class HostManagedChannelBuilderFactory {
 
@@ -13,9 +16,15 @@ public class HostManagedChannelBuilderFactory {
     private int maxRetryAttempts = 0;
     private SimpleIdentityManager sim;
     private String grpcEndpoint;
+    private String userAgent;
 
     public HostManagedChannelBuilderFactory withSGrpcEndpoint(String endpoint) {
         this.grpcEndpoint = endpoint;
+        return this;
+    }
+
+    public HostManagedChannelBuilderFactory withUserAgent(String userAgent) {
+        this.userAgent = userAgent;
         return this;
     }
 
@@ -37,12 +46,18 @@ public class HostManagedChannelBuilderFactory {
     public ManagedChannelBuilder makeManagedChannelBuilder() {
         ManagedChannelBuilder builder = ManagedChannelBuilder.forTarget(grpcEndpoint);
 
-        TokenScheduler scheduler = new TokenTimerScheduler(sim, Duration.ofSeconds(10));
+        TokenScheduler scheduler = new TokenTimerScheduler(sim, tokenDuration);
         scheduler.schedule();
-        TokenInjectorClientInterceptor interceptor = new TokenInjectorClientInterceptor(scheduler);
-        builder.intercept(interceptor);
 
-        builder.userAgent(sim.agentIdentity().did());
+        TokenInjectorClientInterceptor tokenInjectorClientInterceptor = new TokenInjectorClientInterceptor(scheduler);
+        List<ClientInterceptor> interceptorList = new ArrayList<>();
+        interceptorList.add(tokenInjectorClientInterceptor);
+        builder.intercept(interceptorList);
+        if (userAgent == null) {
+            builder.userAgent("UserAgent=" + sim.agentIdentity().did());
+        } else {
+            builder.userAgent(userAgent);
+        }
 
         if (this.maxRetryAttempts > 0) {
             builder.enableRetry().maxRetryAttempts(maxRetryAttempts);
