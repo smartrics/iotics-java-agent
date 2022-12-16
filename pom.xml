@@ -22,6 +22,24 @@
         <protobuf-maven-plugin.version>0.6.1</protobuf-maven-plugin.version>
         <slf4j.version>1.7.32</slf4j.version>
     </properties>
+    <licenses>
+        <license>
+            <name>The Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
+    <developers>
+        <developer>
+            <id>smartrics</id>
+            <name>Fabrizio Cannizzo</name>
+            <email>smartrics@gmail.com</email>
+        </developer>
+    </developers>
+    <scm>
+        <connection>scm:git:git@github.com:smartrics/iotics-java-agent.git</connection>
+        <developerConnection>scm:git:ssh://github.com:smartrics/iotics-java-agent.git</developerConnection>
+        <url>https://github.com/smartrics/iotics-java-agent/tree/main</url>
+    </scm>
     <dependencies>
         <!-- https://github.com/grpc/grpc-java -->
         <dependency> <!-- necessary for Java 9+ -->
