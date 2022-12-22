@@ -3,6 +3,7 @@ package smartrics.iotics.space.twins;
 import com.google.common.base.Strings;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.iotics.api.*;
+import com.iotics.sdk.identity.Identity;
 import com.iotics.sdk.identity.SimpleIdentityManager;
 import smartrics.iotics.space.Builders;
 
@@ -15,7 +16,10 @@ public class GenericModelTwin extends AbstractTwin {
     private final String defines;
     private final String color;
 
-    protected GenericModelTwin(SimpleIdentityManager sim, String keyName, TwinAPIGrpc.TwinAPIFutureStub stub, Executor executor,
+    protected GenericModelTwin(SimpleIdentityManager sim,
+                               String keyName,
+                               TwinAPIGrpc.TwinAPIFutureStub stub,
+                               Executor executor,
                                String label, String comment, String defines, String color) {
         super(sim, keyName, stub, executor);
         this.label = checkEmptyOrNull("label", label);
@@ -25,7 +29,7 @@ public class GenericModelTwin extends AbstractTwin {
     }
 
     public ListenableFuture<UpsertTwinResponse> make() {
-        return this.twinStub.upsertTwin(UpsertTwinRequest.newBuilder()
+        return getTwinAPIFutureStub().upsertTwin(UpsertTwinRequest.newBuilder()
                 .setHeaders(Builders.newHeadersBuilder(sim.agentIdentity().did())
                         .build())
                 .setPayload(UpsertTwinRequest.Payload.newBuilder()

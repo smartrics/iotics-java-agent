@@ -6,7 +6,7 @@
 
     <groupId>smartrics.iotics</groupId>
     <artifactId>iotics-java-agent</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.1-SNAPSHOT</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
