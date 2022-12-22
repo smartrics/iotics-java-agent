@@ -25,9 +25,9 @@ public abstract class AbstractTwin implements Identifiable, Maker {
     public static final String ON_RDF = "http://www.w3.org/1999/02/22-rdf-syntax-ns";
     public static final String ON_RDFS = "http://www.w3.org/2000/01/rdf-schema";
 
-    protected final SimpleIdentityManager sim;
-    protected final Identity identity;
-    protected final Executor executor;
+    private final SimpleIdentityManager sim;
+    private final Identity identity;
+    private final Executor executor;
 
     private final TwinAPIGrpc.TwinAPIFutureStub twinStub;
 
@@ -52,7 +52,11 @@ public abstract class AbstractTwin implements Identifiable, Maker {
 
     @Override
     public Identity getAgentIdentity() {
-        return this.sim.agentIdentity();
+        return getSim().agentIdentity();
+    }
+
+    protected SimpleIdentityManager getSim() {
+        return this.sim;
     }
 
 }

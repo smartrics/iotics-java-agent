@@ -30,10 +30,10 @@ public class GenericModelTwin extends AbstractTwin {
 
     public ListenableFuture<UpsertTwinResponse> make() {
         return getTwinAPIFutureStub().upsertTwin(UpsertTwinRequest.newBuilder()
-                .setHeaders(Builders.newHeadersBuilder(sim.agentIdentity().did())
+                .setHeaders(Builders.newHeadersBuilder(getAgentIdentity().did())
                         .build())
                 .setPayload(UpsertTwinRequest.Payload.newBuilder()
-                        .setTwinId(TwinID.newBuilder().setId(identity.did()).build())
+                        .setTwinId(TwinID.newBuilder().setId(getIdentity().did()).build())
                         .addProperties(Property.newBuilder()
                                 .setKey(ON_RDFS + "#comment")
                                 .setLiteralValue(Literal.newBuilder().setValue(this.comment).build())
