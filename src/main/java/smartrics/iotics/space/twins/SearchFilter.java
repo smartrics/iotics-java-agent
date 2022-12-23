@@ -1,7 +1,10 @@
-package smartrics.iotics.elastic;
+package smartrics.iotics.space.twins;
 
 import com.google.protobuf.Timestamp;
-import com.iotics.api.*;
+import com.iotics.api.GeoCircle;
+import com.iotics.api.Property;
+import com.iotics.api.ResponseType;
+import com.iotics.api.Scope;
 
 import java.util.ArrayList;
 import java.util.List;
