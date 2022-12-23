@@ -14,8 +14,8 @@ public class TokenTimerScheduler implements TokenScheduler {
     private final Duration duration;
     private final AtomicReference<String> validToken;
 
-    public TokenTimerScheduler(IdentityManager identityManager, Duration duration) {
-        this.timer = new Timer("token-timer-scheduler");
+    TokenTimerScheduler(IdentityManager identityManager, Duration duration, Timer timer) {
+        this.timer = timer;
         this.identityManager = identityManager;
         this.validToken = new AtomicReference<>();
         this.duration = duration;
@@ -26,8 +26,6 @@ public class TokenTimerScheduler implements TokenScheduler {
         this.timer.schedule(new TimerTask() {
             @Override
             public void run() {
-                // gets a token for thisI am gettin an user
-
                 // a token is used to auth this agent and user - the token has a validity. The longer the validity
                 // the lower the security - if token is stolen the thief can impersonate
                 validToken.set(identityManager.newAuthenticationToken(duration));
