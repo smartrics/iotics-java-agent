@@ -17,7 +17,7 @@ public class SearchFilter {
     //arbitrary defaults
     private Scope scope;
     private ResponseType responseType;
-    private Timestamp timestamp;
+    private Timestamp expiryTimeout;
 
     public Optional<String> text() {
         return Optional.ofNullable(text);
@@ -36,7 +36,7 @@ public class SearchFilter {
     }
 
     public Optional<Timestamp> expiryTimeout() {
-        return Optional.ofNullable(timestamp);
+        return Optional.ofNullable(expiryTimeout);
     }
 
     public Optional<ResponseType> responseType() {
@@ -49,7 +49,7 @@ public class SearchFilter {
         private GeoCircle location;
         private Scope scope = Scope.LOCAL;
         private ResponseType responseType = ResponseType.FULL;
-        private Timestamp timestamp = Timestamp.newBuilder().setSeconds(5).build();
+        private Timestamp expiryTimeout = Timestamp.newBuilder().setSeconds(5).build();
 
         private Builder() {
         }
@@ -58,8 +58,8 @@ public class SearchFilter {
             return new Builder();
         }
 
-        public Builder withTimestamp(Timestamp timestamp) {
-            this.timestamp = timestamp;
+        public Builder withExpiryTimeout(Timestamp timestamp) {
+            this.expiryTimeout = timestamp;
             return this;
         }
 
@@ -99,7 +99,7 @@ public class SearchFilter {
             searchFilter.text = this.text;
             searchFilter.location = this.location;
             searchFilter.responseType = this.responseType;
-            searchFilter.timestamp = this.timestamp;
+            searchFilter.expiryTimeout = this.expiryTimeout;
             searchFilter.scope = this.scope;
             return searchFilter;
         }
