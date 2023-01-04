@@ -28,9 +28,9 @@ public interface Follower extends Identifiable {
     })
             .withDelay(Duration.ofSeconds(1))
             .withMaxRetries(-1)
-            .onRetry(event -> System.out.println("retry event " + event))
-            .onAbort(event -> System.out.println("Aborting"))
-            .onRetriesExceeded(event -> System.out.println("Retries exceeded"))
+//            .onRetry(event -> System.out.println("retry event " + event))
+//            .onAbort(event -> System.out.println("Aborting"))
+//            .onRetriesExceeded(event -> System.out.println("Retries exceeded"))
             .withJitter(Duration.ofMillis(100));
 
     InterestAPIGrpc.InterestAPIStub getInterestAPIStub();
