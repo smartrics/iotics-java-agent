@@ -14,6 +14,7 @@ import smartrics.iotics.space.Builders;
 
 import java.time.Duration;
 import java.util.Iterator;
+import java.util.concurrent.CompletableFuture;
 
 public interface Follower extends Identifiable {
 
@@ -47,9 +48,9 @@ public interface Follower extends Identifiable {
         follow(feedID, DEF_RETRY_POLICY_FOLLOW.build(), responseStreamObserver);
     }
 
-    default void follow(FeedID feedID, RetryPolicy<Object> retryPolicy, StreamObserver<FetchInterestResponse> responseStreamObserver) {
+    default CompletableFuture<Void> follow(FeedID feedID, RetryPolicy<Object> retryPolicy, StreamObserver<FetchInterestResponse> responseStreamObserver) {
         try {
-            Failsafe.with(retryPolicy).run(() -> {
+            return Failsafe.with(retryPolicy).runAsync(() -> {
                 Iterator<FetchInterestResponse> iterator = follow(feedID);
                 while (iterator.hasNext()) {
                     FetchInterestResponse fetchInterestResponse = iterator.next();
@@ -64,7 +65,7 @@ public interface Follower extends Identifiable {
             // for any non retryable exception
             responseStreamObserver.onError(t);
         }
-
+        return null;
     }
 
     @NotNull
