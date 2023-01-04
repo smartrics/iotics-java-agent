@@ -6,9 +6,6 @@ import dev.failsafe.Failsafe;
 import dev.failsafe.FailsafeException;
 import dev.failsafe.RetryPolicy;
 import dev.failsafe.RetryPolicyBuilder;
-import dev.failsafe.event.EventListener;
-import dev.failsafe.event.ExecutionAttemptedEvent;
-import dev.failsafe.event.ExecutionCompletedEvent;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
@@ -50,8 +47,8 @@ public interface Follower extends Identifiable {
         return getInterestAPIBlockingStub().fetchInterests(request);
     }
 
-    default void follow(FeedID feedID, StreamObserver<FetchInterestResponse> responseStreamObserver) {
-        follow(feedID, DEF_RETRY_POLICY_FOLLOW.build(), responseStreamObserver);
+    default CompletableFuture<Void> follow(FeedID feedID, StreamObserver<FetchInterestResponse> responseStreamObserver) {
+        return follow(feedID, DEF_RETRY_POLICY_FOLLOW.build(), responseStreamObserver);
     }
 
     default CompletableFuture<Void> follow(FeedID feedID, RetryPolicy<Object> retryPolicy, StreamObserver<FetchInterestResponse> responseStreamObserver) {
