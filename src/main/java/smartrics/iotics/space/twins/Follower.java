@@ -6,6 +6,9 @@ import dev.failsafe.Failsafe;
 import dev.failsafe.FailsafeException;
 import dev.failsafe.RetryPolicy;
 import dev.failsafe.RetryPolicyBuilder;
+import dev.failsafe.event.EventListener;
+import dev.failsafe.event.ExecutionAttemptedEvent;
+import dev.failsafe.event.ExecutionCompletedEvent;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
@@ -27,7 +30,10 @@ public interface Follower extends Identifiable {
                 || sre.getStatus() == Status.UNAVAILABLE;
     })
             .withDelay(Duration.ofSeconds(1))
-            .withMaxRetries(3)
+            .withMaxRetries(-1)
+            .onRetry(event -> System.out.println("retry event " + event))
+            .onAbort(event -> System.out.println("Aborting"))
+            .onRetriesExceeded(event -> System.out.println("Retries exceeded"))
             .withJitter(Duration.ofMillis(100));
 
     InterestAPIGrpc.InterestAPIStub getInterestAPIStub();
