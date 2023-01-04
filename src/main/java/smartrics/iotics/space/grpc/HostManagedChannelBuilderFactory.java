@@ -15,7 +15,6 @@ import java.util.Timer;
 public class HostManagedChannelBuilderFactory {
 
     private Duration tokenDuration;
-    private int maxRetryAttempts = 0;
     private SimpleIdentityManager sim;
     private String grpcEndpoint;
     private String userAgent;
@@ -46,11 +45,6 @@ public class HostManagedChannelBuilderFactory {
         return this;
     }
 
-    public HostManagedChannelBuilderFactory withMaxRetryAttempts(int maxRetryAttempts) {
-        this.maxRetryAttempts = maxRetryAttempts;
-        return this;
-    }
-
     public ManagedChannelBuilder makeManagedChannelBuilder() {
         ManagedChannelBuilder builder = ManagedChannelBuilder.forTarget(grpcEndpoint);
 
@@ -70,10 +64,6 @@ public class HostManagedChannelBuilderFactory {
             builder.userAgent("UserAgent=" + sim.agentIdentity().did());
         } else {
             builder.userAgent(userAgent);
-        }
-
-        if (this.maxRetryAttempts > 0) {
-            builder.enableRetry().maxRetryAttempts(maxRetryAttempts);
         }
         return builder;
     }
