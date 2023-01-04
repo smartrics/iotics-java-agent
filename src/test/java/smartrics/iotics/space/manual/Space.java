@@ -59,7 +59,6 @@ public class Space {
                 .withSimpleIdentityManager(sim)
                 .withSGrpcEndpoint(ioticSpace.endpoints().grpc())
                 .withTokenTokenDuration(Duration.ofSeconds(10))
-                .withMaxRetryAttempts(10)
                 .makeManagedChannelBuilder();
         return channelBuilder.keepAliveWithoutCalls(true).build();
     }
