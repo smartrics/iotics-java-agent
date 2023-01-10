@@ -121,7 +121,7 @@ public class FindAndBindTwin extends AbstractTwinWithModel implements Follower, 
                     follow(feedDetails.getFeedId(), new AbstractLoggingStreamObserver<>(feedDetails.getFeedId().toString()) {
                         @Override
                         public void onNext(FetchInterestResponse value) {
-                            streamObserver.onNext(new DataDetails(twinDetails, feedDetails, value));
+                            streamObserver.onNext(new DataDetails(FindAndBindTwin.this.getModelDid(), twinDetails, feedDetails, value));
                         }
                     });
                 }
