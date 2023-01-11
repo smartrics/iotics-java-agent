@@ -22,9 +22,6 @@ import java.util.concurrent.Executor;
 
 public abstract class AbstractTwin implements Identifiable, Maker {
 
-    public static final String ON_RDF = "http://www.w3.org/1999/02/22-rdf-syntax-ns";
-    public static final String ON_RDFS = "http://www.w3.org/2000/01/rdf-schema";
-
     private final SimpleIdentityManager sim;
     private final Identity identity;
     private final Executor executor;

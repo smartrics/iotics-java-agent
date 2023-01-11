@@ -8,6 +8,7 @@ import com.iotics.sdk.identity.SimpleIdentityManager;
 import smartrics.iotics.space.Builders;
 
 import java.util.concurrent.Executor;
+import static smartrics.iotics.space.UriConstants.*;
 
 public class GenericModelTwin extends AbstractTwin {
 
@@ -35,28 +36,28 @@ public class GenericModelTwin extends AbstractTwin {
                 .setPayload(UpsertTwinRequest.Payload.newBuilder()
                         .setTwinId(TwinID.newBuilder().setId(getIdentity().did()).build())
                         .addProperties(Property.newBuilder()
-                                .setKey(ON_RDFS + "#comment")
+                                .setKey(ON_RDFS_COMMENT)
                                 .setLiteralValue(Literal.newBuilder().setValue(this.comment).build())
                                 .build())
                         .addProperties(Property.newBuilder()
-                                .setKey(ON_RDFS + "#label")
+                                .setKey(ON_RDFS_LABEL)
                                 .setLiteralValue(Literal.newBuilder().setValue(this.label).build())
                                 .build())
                         .addProperties(Property.newBuilder()
-                                .setKey(ON_RDF + "#type")
-                                .setUriValue(Uri.newBuilder().setValue("https://data.iotics.com/app#Model").build())
+                                .setKey(ON_RDF_TYPE)
+                                .setUriValue(Uri.newBuilder().setValue(IOTICS_APP_MODEL).build())
                                 .build())
                         .addProperties(Property.newBuilder()
-                                .setKey("https://data.iotics.com/app#defines")
+                                .setKey(IOTICS_APP_DEFINES)
                                 .setUriValue(Uri.newBuilder().setValue(this.defines).build())
                                 .build())
                         .addProperties(Property.newBuilder()
-                                .setKey("https://data.iotics.com/app#color")
+                                .setKey(IOTICS_APP_COLOR)
                                 .setLiteralValue(Literal.newBuilder().setValue(this.color).build())
                                 .build())
                         .addProperties(Property.newBuilder()
-                                .setKey("http://data.iotics.com/public#hostAllowList")
-                                .setUriValue(Uri.newBuilder().setValue("http://data.iotics.com/public#allHosts").build())
+                                .setKey(IOTICS_PUBLIC_ALLOW_LIST)
+                                .setUriValue(Uri.newBuilder().setValue(IOTICS_PUBLIC_ALLOW_ALL).build())
                                 .build())
                         .build())
                 .build());
