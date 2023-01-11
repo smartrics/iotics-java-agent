@@ -15,7 +15,7 @@ public record TwinData(SearchResponse.TwinDetails twinDetails) {
 
     public Optional<TwinID> optionalModelTwinID(String hostID) {
         List<String> list = twinDetails.getPropertiesList().stream()
-                .filter(property -> property.getKey().equals(UriConstants.IOTICS_APP_MODEL)).map(p -> p.getUriValue().getValue()).toList();
+                .filter(property -> property.getKey().equals(UriConstants.IOTICS_APP_MODEL_PROP)).map(p -> p.getUriValue().getValue()).toList();
         if (list.size() > 0) {
             return Optional.of(TwinID.newBuilder().setId(list.get(0)).setHostId(hostID).build());
         }
