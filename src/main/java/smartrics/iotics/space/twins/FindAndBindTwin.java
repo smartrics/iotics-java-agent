@@ -7,8 +7,8 @@ import io.grpc.stub.StreamObserver;
 import smartrics.iotics.space.Builders;
 import smartrics.iotics.space.grpc.AbstractLoggingStreamObserver;
 import smartrics.iotics.space.grpc.NoopStreamObserver;
-import smartrics.iotics.space.grpc.TwinData;
-import smartrics.iotics.space.grpc.FeedData;
+import smartrics.iotics.space.grpc.TwinDatabag;
+import smartrics.iotics.space.grpc.FeedDatabag;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -116,22 +116,22 @@ public class FindAndBindTwin extends AbstractTwinWithModel implements Follower, 
         return this.searchStub;
     }
 
-    public CompletableFuture<Void> findAndBind(SearchFilter searchFilter, StreamObserver<FeedData> streamObserver) {
-        return this.findAndBind(searchFilter, new NoopStreamObserver<TwinData>(), streamObserver);
+    public CompletableFuture<Void> findAndBind(SearchFilter searchFilter, StreamObserver<FeedDatabag> streamObserver) {
+        return this.findAndBind(searchFilter, new NoopStreamObserver<TwinDatabag>(), streamObserver);
     }
 
-    public CompletableFuture<Void> findAndBind(SearchFilter searchFilter, StreamObserver<TwinData> twinStreamObserver, StreamObserver<FeedData> feedDataStreamObserver) {
+    public CompletableFuture<Void> findAndBind(SearchFilter searchFilter, StreamObserver<TwinDatabag> twinStreamObserver, StreamObserver<FeedDatabag> feedDataStreamObserver) {
         CompletableFuture<Void> resFuture = new CompletableFuture<>();
         StreamObserver<SearchResponse.TwinDetails> resultsStreamObserver = new AbstractLoggingStreamObserver<>("'search'") {
             @Override
             public void onNext(SearchResponse.TwinDetails twinDetails) {
-                TwinData twinData = new TwinData(twinDetails);
+                TwinDatabag twinData = new TwinDatabag(twinDetails);
                 twinStreamObserver.onNext(twinData);
                 for (SearchResponse.FeedDetails feedDetails : twinDetails.getFeedsList()) {
                     follow(feedDetails.getFeedId(), new AbstractLoggingStreamObserver<>(feedDetails.getFeedId().toString()) {
                         @Override
                         public void onNext(FetchInterestResponse value) {
-                            feedDataStreamObserver.onNext(new FeedData(twinData, feedDetails, value));
+                            feedDataStreamObserver.onNext(new FeedDatabag(twinData, feedDetails, value));
                         }
                     });
                 }

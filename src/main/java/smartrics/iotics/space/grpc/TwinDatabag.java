@@ -7,7 +7,7 @@ import smartrics.iotics.space.UriConstants;
 import java.util.List;
 import java.util.Optional;
 
-public record TwinData(SearchResponse.TwinDetails twinDetails) {
+public record TwinDatabag(SearchResponse.TwinDetails twinDetails) {
 
     public Optional<TwinID> optionalModelTwinID() {
         return this.optionalModelTwinID(twinDetails.getTwinId().getHostId());
