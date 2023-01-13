@@ -3,6 +3,7 @@ package smartrics.iotics.space.twins;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.iotics.api.*;
 import com.iotics.sdk.identity.SimpleIdentityManager;
+import io.grpc.Context;
 import io.grpc.stub.StreamObserver;
 import smartrics.iotics.space.Builders;
 import smartrics.iotics.space.grpc.AbstractLoggingStreamObserver;
@@ -10,8 +11,11 @@ import smartrics.iotics.space.grpc.NoopStreamObserver;
 import smartrics.iotics.space.grpc.TwinDatabag;
 import smartrics.iotics.space.grpc.FeedDatabag;
 
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
+import java.util.function.Consumer;
 
 import static smartrics.iotics.space.UriConstants.*;
 
@@ -20,6 +24,7 @@ public class FindAndBindTwin extends AbstractTwinWithModel implements Follower, 
     private final InterestAPIGrpc.InterestAPIStub interestStub;
     private final SearchAPIGrpc.SearchAPIStub searchStub;
     private final InterestAPIGrpc.InterestAPIBlockingStub interestBlockingStub;
+    private final Map<FeedID, CompletableFuture<Void>> followFutures;
 
     public FindAndBindTwin(SimpleIdentityManager sim,
                            String keyName,
@@ -35,7 +40,9 @@ public class FindAndBindTwin extends AbstractTwinWithModel implements Follower, 
         this.interestStub = interestStub;
         this.searchStub = searchStub;
         this.interestBlockingStub = interestBlockingStub;
+        this.followFutures = new ConcurrentHashMap<>();
     }
+
 
     @Override
     public ListenableFuture<UpsertTwinResponse> make() {
@@ -128,19 +135,22 @@ public class FindAndBindTwin extends AbstractTwinWithModel implements Follower, 
                 TwinDatabag twinData = new TwinDatabag(twinDetails);
                 twinStreamObserver.onNext(twinData);
                 for (SearchResponse.FeedDetails feedDetails : twinDetails.getFeedsList()) {
-                    follow(feedDetails.getFeedId(), new AbstractLoggingStreamObserver<>(feedDetails.getFeedId().toString()) {
+                    CompletableFuture<Void> followFut = follow(feedDetails.getFeedId(), new AbstractLoggingStreamObserver<>(feedDetails.getFeedId().toString()) {
                         @Override
                         public void onNext(FetchInterestResponse value) {
                             feedDataStreamObserver.onNext(new FeedDatabag(twinData, feedDetails, value));
                         }
                     });
+                    followFutures.put(feedDetails.getFeedId(), followFut);
                 }
             }
 
             @Override
             public void onCompleted() {
                 super.onCompleted();
+                followFutures.values().forEach(future -> future.cancel(true));
                 resFuture.complete(null);
+                followFutures.clear();
             }
         };
         this.search(searchFilter, resultsStreamObserver);

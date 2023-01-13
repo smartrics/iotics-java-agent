@@ -6,6 +6,7 @@ import dev.failsafe.Failsafe;
 import dev.failsafe.FailsafeException;
 import dev.failsafe.RetryPolicy;
 import dev.failsafe.RetryPolicyBuilder;
+import io.grpc.Context;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
@@ -35,8 +36,10 @@ public interface Follower extends Identifiable {
     InterestAPIGrpc.InterestAPIBlockingStub getInterestAPIBlockingStub();
 
     default void followNoRetry(FeedID feedId, StreamObserver<FetchInterestResponse> responseStreamObserver)  {
-        FetchInterestRequest request = newRequest(feedId);
-        getInterestAPIStub().fetchInterests(request, responseStreamObserver);
+        getCancellableContext().run(() -> {
+            FetchInterestRequest request = newRequest(feedId);
+            getInterestAPIStub().fetchInterests(request, responseStreamObserver);
+        });
     }
 
     default Iterator<FetchInterestResponse> follow(FeedID feedId)  {
@@ -48,24 +51,34 @@ public interface Follower extends Identifiable {
         return follow(feedID, DEF_RETRY_POLICY_FOLLOW.build(), responseStreamObserver);
     }
 
-    default CompletableFuture<Void> follow(FeedID feedID, RetryPolicy<Object> retryPolicy, StreamObserver<FetchInterestResponse> responseStreamObserver) {
+    default CompletableFuture<Void> follow(FeedID feedID, RetryPolicy<Object> retryPolicy,
+                                           StreamObserver<FetchInterestResponse> responseStreamObserver) {
         try {
             return Failsafe.with(retryPolicy).runAsync(() -> {
-                Iterator<FetchInterestResponse> iterator = follow(feedID);
-                while (iterator.hasNext()) {
-                    FetchInterestResponse fetchInterestResponse = iterator.next();
-                    responseStreamObserver.onNext(fetchInterestResponse);
-                }
-                responseStreamObserver.onCompleted();
+                getCancellableContext().run(() -> {
+                    Iterator<FetchInterestResponse> iterator = follow(feedID);
+                    while (iterator.hasNext()) {
+                        FetchInterestResponse fetchInterestResponse = iterator.next();
+                        responseStreamObserver.onNext(fetchInterestResponse);
+                    }
+                    responseStreamObserver.onCompleted();
+                });
+
             });
         } catch (FailsafeException t) {
+            t.printStackTrace();
             // when completed the retries
             responseStreamObserver.onError(t);
         } catch (Throwable t) {
             // for any non retryable exception
             responseStreamObserver.onError(t);
         }
-        return null;
+        return new CompletableFuture<>();
+    }
+
+    // this is needed to stop the follow when the application needs to stop
+    default Context.CancellableContext getCancellableContext() {
+        return Context.current().withCancellation();
     }
 
     @NotNull
