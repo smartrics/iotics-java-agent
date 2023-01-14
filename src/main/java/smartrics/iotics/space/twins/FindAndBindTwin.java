@@ -123,11 +123,11 @@ public class FindAndBindTwin extends AbstractTwinWithModel implements Follower, 
         return this.searchStub;
     }
 
-    public CompletableFuture<Void> findAndBind(SearchFilter searchFilter, StreamObserver<FeedDatabag> streamObserver) {
-        return this.findAndBind(searchFilter, new NoopStreamObserver<TwinDatabag>(), streamObserver);
+    public CompletableFuture<Void> findAndBind(SearchRequest.Payload searchRequestPayload, StreamObserver<FeedDatabag> streamObserver) {
+        return this.findAndBind(searchRequestPayload, new NoopStreamObserver<TwinDatabag>(), streamObserver);
     }
 
-    public CompletableFuture<Void> findAndBind(SearchFilter searchFilter, StreamObserver<TwinDatabag> twinStreamObserver, StreamObserver<FeedDatabag> feedDataStreamObserver) {
+    public CompletableFuture<Void> findAndBind(SearchRequest.Payload searchRequestPayload, StreamObserver<TwinDatabag> twinStreamObserver, StreamObserver<FeedDatabag> feedDataStreamObserver) {
         CompletableFuture<Void> resFuture = new CompletableFuture<>();
         StreamObserver<SearchResponse.TwinDetails> resultsStreamObserver = new AbstractLoggingStreamObserver<>("'search'") {
             @Override
@@ -153,7 +153,7 @@ public class FindAndBindTwin extends AbstractTwinWithModel implements Follower, 
                 followFutures.clear();
             }
         };
-        this.search(searchFilter, resultsStreamObserver);
+        this.search(searchRequestPayload, resultsStreamObserver);
         return resFuture;
     }
 
