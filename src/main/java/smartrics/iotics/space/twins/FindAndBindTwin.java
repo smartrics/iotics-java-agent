@@ -146,6 +146,12 @@ public class FindAndBindTwin extends AbstractTwinWithModel implements Follower, 
             }
 
             @Override
+            public void onError(Throwable throwable) {
+                super.onError(throwable);
+                resFuture.completeExceptionally(throwable);
+            }
+
+            @Override
             public void onCompleted() {
                 super.onCompleted();
                 followFutures.values().forEach(future -> future.cancel(true));
