@@ -70,8 +70,6 @@
             <groupId>com.iotics.sdk.identity</groupId>
             <artifactId>java-idsdk</artifactId>
             <version>1.1-SNAPSHOT</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/lib/java-idsdk-1.1-SNAPSHOT.jar</systemPath>
         </dependency>
 
         <!-- TEST -->
