@@ -1,13 +1,7 @@
 package smartrics.iotics.space.grpc;
 
-import com.iotics.sdk.identity.IdentityManager;
 import io.grpc.*;
 import smartrics.iotics.space.identity.TokenScheduler;
-
-import java.time.Duration;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static io.grpc.Metadata.ASCII_STRING_MARSHALLER;
 

@@ -1,23 +1,10 @@
 package smartrics.iotics.space.twins;
 
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
-import com.google.protobuf.BoolValue;
-import com.google.protobuf.ByteString;
-import com.iotics.api.*;
+import com.iotics.api.TwinAPIGrpc;
+import com.iotics.api.TwinID;
 import com.iotics.sdk.identity.Identity;
 import com.iotics.sdk.identity.SimpleIdentityManager;
-import io.grpc.Status;
-import io.grpc.StatusRuntimeException;
-import io.grpc.stub.StreamObserver;
-import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import smartrics.iotics.space.Builders;
 
-import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Executor;
 
 public abstract class AbstractTwin implements Identifiable, Maker {

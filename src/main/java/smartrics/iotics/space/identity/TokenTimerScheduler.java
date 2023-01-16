@@ -23,6 +23,9 @@ public class TokenTimerScheduler implements TokenScheduler {
 
     @Override
     public void schedule() {
+        if(timer == null) {
+            return;
+        }
         this.timer.schedule(new TimerTask() {
             @Override
             public void run() {
@@ -36,7 +39,9 @@ public class TokenTimerScheduler implements TokenScheduler {
 
     @Override
     public void cancel() {
-        this.timer.cancel();
+        if(timer!=null) {
+            this.timer.cancel();
+        }
     }
 
     @Override

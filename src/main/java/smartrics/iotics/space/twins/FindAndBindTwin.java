@@ -1,30 +1,62 @@
 package smartrics.iotics.space.twins;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.gson.Gson;
+import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
+import com.google.protobuf.util.JsonFormat;
 import com.iotics.api.*;
 import com.iotics.sdk.identity.SimpleIdentityManager;
-import io.grpc.Context;
 import io.grpc.stub.StreamObserver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import smartrics.iotics.space.Builders;
-import smartrics.iotics.space.grpc.AbstractLoggingStreamObserver;
 import smartrics.iotics.space.grpc.NoopStreamObserver;
 import smartrics.iotics.space.grpc.TwinDatabag;
 import smartrics.iotics.space.grpc.FeedDatabag;
 
+import java.nio.charset.Charset;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
 import static smartrics.iotics.space.UriConstants.*;
+import static smartrics.iotics.space.grpc.ListenableFutureAdapter.toCompletable;
 
 public class FindAndBindTwin extends AbstractTwinWithModel implements Follower, Publisher, Searcher {
+
+    public static final String COUNTERS_FEED_ID = "counters";
+    private static Logger LOGGER = LoggerFactory.getLogger(FindAndBindTwin.class);
+
+    public static final String RECEIVED_DATA_POINTS = "receivedDataPoints";
+    public static final String FOLLOWING_FEEDS = "followingFeeds";
+    public static final String FOUND_TWINS = "foundTwins";
+    public static final String TIMESTAMP = "timestamp";
+
+    private static DateTimeFormatter dtf = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ssX");
     private final FeedAPIGrpc.FeedAPIFutureStub feedStub;
     private final InterestAPIGrpc.InterestAPIStub interestStub;
     private final SearchAPIGrpc.SearchAPIStub searchStub;
     private final InterestAPIGrpc.InterestAPIBlockingStub interestBlockingStub;
     private final Map<FeedID, CompletableFuture<Void>> followFutures;
+
+    private final AtomicLong twinsFound = new AtomicLong(0);
+    private final AtomicLong feedsFollowed = new AtomicLong(0);
+    private final AtomicLong datapointReceived = new AtomicLong(0);
+    private final Gson gson;
+
+    private final AtomicLong lastUpdateMs = new AtomicLong(-1);
+    private final long shareEveryMs;
 
     public FindAndBindTwin(SimpleIdentityManager sim,
                            String keyName,
@@ -34,15 +66,88 @@ public class FindAndBindTwin extends AbstractTwinWithModel implements Follower, 
                            InterestAPIGrpc.InterestAPIBlockingStub interestBlockingStub,
                            SearchAPIGrpc.SearchAPIStub searchStub,
                            Executor executor,
-                           TwinID modelDid) {
+                           TwinID modelDid,
+                           Timer shareDataTimer,
+                           Duration shareEvery) {
         super(sim, keyName, twinStub, executor, modelDid);
         this.feedStub = feedStub;
         this.interestStub = interestStub;
         this.searchStub = searchStub;
         this.interestBlockingStub = interestBlockingStub;
         this.followFutures = new ConcurrentHashMap<>();
+        this.shareEveryMs = shareEvery.getSeconds() * 1000;
+        this.gson = new Gson();
+        shareDataTimer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                try{
+                    shareStatus();
+                }catch (Exception e) {
+                    e.printStackTrace();
+                    LOGGER.warn("exception when sharing", e);
+                }
+            }
+        }, 0, shareEveryMs);
+
     }
 
+    public void shareStatus() {
+        Map<String, Object> data = new HashMap<>();
+        data.put(FOLLOWING_FEEDS, feedsFollowed.get());
+        data.put(RECEIVED_DATA_POINTS, datapointReceived.get());
+        data.put(FOUND_TWINS, twinsFound.get());
+        data.put(TIMESTAMP, LocalDateTime.now().atOffset(ZoneOffset.UTC).format(dtf));
+
+        if(System.currentTimeMillis() - this.shareEveryMs > this.lastUpdateMs.get()) {
+            // no need to share since nothing has updated yet
+            return;
+        }
+
+        LOGGER.info("sharing counters data: {}", data);
+        toCompletable(feedStub.shareFeedData(ShareFeedDataRequest.newBuilder()
+                .setHeaders(Builders.newHeadersBuilder(getAgentIdentity().did()).build())
+                .setArgs(ShareFeedDataRequest.Arguments.newBuilder()
+                        .setFeedId(FeedID.newBuilder()
+                                .setTwinId(this.getIdentity().did())
+                                .setId(COUNTERS_FEED_ID).build())
+                        .build())
+                .setPayload(ShareFeedDataRequest.Payload.newBuilder()
+                        .setSample(FeedData.newBuilder()
+                                .setMime("application/json")
+                                .setData(ByteString.copyFrom(gson.toJson(data), Charset.defaultCharset()))
+                                .build())
+                        .build())
+                .build()))
+                .thenAccept(shareFeedDataResponse -> {
+                    LOGGER.info("shared counters data: {}", data);
+                });
+    }
+
+    public void updateMeta(SearchRequest.Payload searchRequestPayload) throws InvalidProtocolBufferException {
+        String jsonSearchRequest = JsonFormat.printer()
+                .omittingInsignificantWhitespace()
+                .preservingProtoFieldNames()
+                .sortingMapKeys()
+                .print(SearchRequest.Payload.newBuilder(searchRequestPayload));
+
+        toCompletable(getTwinAPIFutureStub().upsertTwin(UpsertTwinRequest.newBuilder()
+                .setHeaders(Builders.newHeadersBuilder(getAgentIdentity().did()).build())
+                        .setPayload(UpsertTwinRequest.Payload.newBuilder()
+                                .setTwinId(TwinID.newBuilder().setId(getIdentity().did()).build())
+                                .addProperties(Property.newBuilder()
+                                        .setKey("http://data.iotics.com/ont/simpleSearch")
+                                        .setStringLiteralValue(StringLiteral.newBuilder()
+                                                .setValue(jsonSearchRequest)
+                                                .build())
+                                        .build())
+                                .build())
+                .build())).thenAccept(new Consumer<UpsertTwinResponse>() {
+            @Override
+            public void accept(UpsertTwinResponse upsertTwinResponse) {
+                LOGGER.info("Update complete to store metadata with {}", jsonSearchRequest);
+            }
+        });
+    }
 
     @Override
     public ListenableFuture<UpsertTwinResponse> make() {
@@ -53,11 +158,13 @@ public class FindAndBindTwin extends AbstractTwinWithModel implements Follower, 
                         .setVisibility(Visibility.PRIVATE)
                         .addProperties(Property.newBuilder()
                                 .setKey(ON_RDFS_COMMENT_PROP)
-                                .setLiteralValue(Literal.newBuilder().setValue("Data receiver: it follows feeds and makes them available for post processing").build())
+                                .setLiteralValue(Literal.newBuilder()
+                                        .setValue("FindAndBindTwin: it follows feeds and makes them available for post processing")
+                                        .build())
                                 .build())
                         .addProperties(Property.newBuilder()
                                 .setKey(ON_RDFS_LABEL_PROP)
-                                .setLiteralValue(Literal.newBuilder().setValue("DataReceive").build())
+                                .setLiteralValue(Literal.newBuilder().setValue("FindAndBindTwin").build())
                                 .build())
                         .addProperties(Property.newBuilder()
                                 .setKey(IOTICS_APP_MODEL_PROP)
@@ -72,30 +179,30 @@ public class FindAndBindTwin extends AbstractTwinWithModel implements Follower, 
                                 .setUriValue(Uri.newBuilder().setValue(IOTICS_PUBLIC_ALLOW_ALL_VALUE).build())
                                 .build())
                         .addFeeds(UpsertFeedWithMeta.newBuilder()
-                                .setId("status")
+                                .setId(COUNTERS_FEED_ID)
                                 .setStoreLast(true)
-                                .addValues(Value.newBuilder()
-                                        .setLabel("status").setComment("twin status")
-                                        .setDataType("boolean")
-                                        .build())
                                 .addProperties(Property.newBuilder()
                                         .setKey(ON_RDFS_COMMENT_PROP)
-                                        .setLiteralValue(Literal.newBuilder().setValue("Twin status").build())
+                                        .setLiteralValue(Literal.newBuilder().setValue("following data counters").build())
                                         .build())
                                 .addProperties(Property.newBuilder()
                                         .setKey(ON_RDFS_LABEL_PROP)
-                                        .setLiteralValue(Literal.newBuilder().setValue("Status").build())
+                                        .setLiteralValue(Literal.newBuilder().setValue("Counters").build())
                                         .build())
                                 .addValues(Value.newBuilder()
-                                        .setLabel("message").setComment("twin status message")
-                                        .setDataType("string")
-                                        .build())
-                                .addValues(Value.newBuilder()
-                                        .setLabel("count").setComment("count data points received since start of the connector")
+                                        .setLabel(RECEIVED_DATA_POINTS).setComment("count data points received since start of the connector")
                                         .setDataType("integer")
                                         .build())
                                 .addValues(Value.newBuilder()
-                                        .setLabel("timestamp").setComment("update date")
+                                        .setLabel(FOLLOWING_FEEDS).setComment("number of feeds actively followed")
+                                        .setDataType("integer")
+                                        .build())
+                                .addValues(Value.newBuilder()
+                                        .setLabel(FOUND_TWINS).setComment("number of feeds actively followed")
+                                        .setDataType("integer")
+                                        .build())
+                                .addValues(Value.newBuilder()
+                                        .setLabel(TIMESTAMP).setComment("update date")
                                         .setDataType("dateTime")
                                         .build())
                                 .build())
@@ -128,31 +235,55 @@ public class FindAndBindTwin extends AbstractTwinWithModel implements Follower, 
     }
 
     public CompletableFuture<Void> findAndBind(SearchRequest.Payload searchRequestPayload, StreamObserver<TwinDatabag> twinStreamObserver, StreamObserver<FeedDatabag> feedDataStreamObserver) {
+//        try {
+//            this.updateMeta(searchRequestPayload);
+//        } catch (Exception e) {
+//            twinStreamObserver.onError(e);
+//            CompletableFuture<Void> c = new CompletableFuture<>();
+//            c.complete(null);
+//            return c;
+//        }
+
         CompletableFuture<Void> resFuture = new CompletableFuture<>();
-        StreamObserver<SearchResponse.TwinDetails> resultsStreamObserver = new AbstractLoggingStreamObserver<>("'search'") {
+        StreamObserver<SearchResponse.TwinDetails> resultsStreamObserver = new StreamObserver<>() {
             @Override
             public void onNext(SearchResponse.TwinDetails twinDetails) {
                 TwinDatabag twinData = new TwinDatabag(twinDetails);
                 twinStreamObserver.onNext(twinData);
+                FindAndBindTwin.this.twinsFound.incrementAndGet();
+                FindAndBindTwin.this.lastUpdateMs.set(System.currentTimeMillis());
                 for (SearchResponse.FeedDetails feedDetails : twinDetails.getFeedsList()) {
-                    CompletableFuture<Void> followFut = follow(feedDetails.getFeedId(), new AbstractLoggingStreamObserver<>(feedDetails.getFeedId().toString()) {
+                    CompletableFuture<Void> followFut = follow(feedDetails.getFeedId(), new StreamObserver<>() {
                         @Override
                         public void onNext(FetchInterestResponse value) {
+                            FindAndBindTwin.this.datapointReceived.incrementAndGet();
+                            FindAndBindTwin.this.lastUpdateMs.set(System.currentTimeMillis());
                             feedDataStreamObserver.onNext(new FeedDatabag(twinData, feedDetails, value));
                         }
+
+                        @Override
+                        public void onError(Throwable t) {
+                            feedDataStreamObserver.onError(t);
+                        }
+
+                        @Override
+                        public void onCompleted() {
+                            feedDataStreamObserver.onCompleted();
+                        }
                     });
+                    FindAndBindTwin.this.feedsFollowed.incrementAndGet();
+                    FindAndBindTwin.this.lastUpdateMs.set(System.currentTimeMillis());
                     followFutures.put(feedDetails.getFeedId(), followFut);
                 }
             }
 
             @Override
             public void onError(Throwable throwable) {
-                super.onError(throwable);
+                twinStreamObserver.onError(throwable);
             }
 
             @Override
             public void onCompleted() {
-                super.onCompleted();
                 followFutures.values().forEach(future -> future.cancel(true));
                 resFuture.complete(null);
                 followFutures.clear();

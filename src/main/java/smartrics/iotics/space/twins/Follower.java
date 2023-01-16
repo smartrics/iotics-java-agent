@@ -11,6 +11,8 @@ import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import smartrics.iotics.space.Builders;
 
 import java.time.Duration;
@@ -18,6 +20,7 @@ import java.util.Iterator;
 import java.util.concurrent.CompletableFuture;
 
 public interface Follower extends Identifiable {
+    Logger LOGGER = LoggerFactory.getLogger(FindAndBindTwin.class);
 
     RetryPolicyBuilder<Object> DEF_RETRY_POLICY_FOLLOW = RetryPolicy.builder()
             .handle(StatusRuntimeException .class)
@@ -44,7 +47,9 @@ public interface Follower extends Identifiable {
 
     default Iterator<FetchInterestResponse> follow(FeedID feedId)  {
         FetchInterestRequest request = newRequest(feedId);
-        return getInterestAPIBlockingStub().fetchInterests(request);
+        Iterator<FetchInterestResponse> it = getInterestAPIBlockingStub().fetchInterests(request);
+        LOGGER.info("followed {}", feedId);
+        return it;
     }
 
     default CompletableFuture<Void> follow(FeedID feedID, StreamObserver<FetchInterestResponse> responseStreamObserver) {
@@ -66,7 +71,7 @@ public interface Follower extends Identifiable {
 
             });
         } catch (FailsafeException t) {
-            t.printStackTrace();
+            LOGGER.debug("exception when retrying", t);
             // when completed the retries
             responseStreamObserver.onError(t);
         } catch (Throwable t) {

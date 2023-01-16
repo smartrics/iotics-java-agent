@@ -63,6 +63,11 @@
             <artifactId>grpc-stub</artifactId>
             <version>${grpc-protobuf.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java-util</artifactId>
+            <version>3.21.12</version>
+        </dependency>
 
         <!-- IOTICS -->
         <dependency>
