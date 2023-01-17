@@ -263,11 +263,15 @@ public class FindAndBindTwin extends AbstractTwinWithModel implements Follower, 
 
                         @Override
                         public void onError(Throwable t) {
+                            FindAndBindTwin.this.feedsFollowed.decrementAndGet();
+                            FindAndBindTwin.this.lastUpdateMs.set(System.currentTimeMillis());
                             feedDataStreamObserver.onError(t);
                         }
 
                         @Override
                         public void onCompleted() {
+                            FindAndBindTwin.this.feedsFollowed.decrementAndGet();
+                            FindAndBindTwin.this.lastUpdateMs.set(System.currentTimeMillis());
                             feedDataStreamObserver.onCompleted();
                         }
                     });
