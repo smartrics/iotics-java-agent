@@ -98,7 +98,7 @@ public class FindAndBindTwin extends AbstractTwinWithModel implements Follower, 
         data.put(FOLLOWING_FEEDS, feedsFollowed.get());
         data.put(RECEIVED_DATA_POINTS, datapointReceived.get());
         data.put(FOUND_TWINS, twinsFound.get());
-        data.put(ERRORS_COUNT, errorsCount.get())
+        data.put(ERRORS_COUNT, errorsCount.get());
         data.put(TIMESTAMP, LocalDateTime.now().atOffset(ZoneOffset.UTC).format(dtf));
 
         if(System.currentTimeMillis() - this.shareEveryMs > this.lastUpdateMs.get()) {
