@@ -1,7 +1,6 @@
 package smartrics.iotics.space.twins;
 
 import com.iotics.api.TwinAPIGrpc;
-import com.iotics.api.TwinID;
 import com.iotics.sdk.identity.Identity;
 import com.iotics.sdk.identity.SimpleIdentityManager;
 

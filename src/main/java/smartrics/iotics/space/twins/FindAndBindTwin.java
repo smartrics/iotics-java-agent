@@ -11,9 +11,9 @@ import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import smartrics.iotics.space.Builders;
+import smartrics.iotics.space.grpc.FeedDatabag;
 import smartrics.iotics.space.grpc.NoopStreamObserver;
 import smartrics.iotics.space.grpc.TwinDatabag;
-import smartrics.iotics.space.grpc.FeedDatabag;
 
 import java.nio.charset.Charset;
 import java.time.Duration;
@@ -28,7 +28,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Consumer;
 
 import static smartrics.iotics.space.UriConstants.*;
 import static smartrics.iotics.space.grpc.ListenableFutureAdapter.toCompletable;
@@ -85,9 +84,9 @@ public class FindAndBindTwin extends AbstractTwinWithModel implements Follower, 
         shareDataTimer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                try{
+                try {
                     shareStatus();
-                }catch (Exception e) {
+                } catch (Exception e) {
                     LOGGER.warn("exception when sharing", e);
                 }
             }
@@ -307,7 +306,7 @@ public class FindAndBindTwin extends AbstractTwinWithModel implements Follower, 
                         followFutures.put(feedDetails.getFeedId(), new CompletableFuture<>());
                     }
 
-                }catch (RuntimeException e) {
+                } catch (RuntimeException e) {
                     LOGGER.debug("exception processing next search response", e);
                     throw e;
                 }

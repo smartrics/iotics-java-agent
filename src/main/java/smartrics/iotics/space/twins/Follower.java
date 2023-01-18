@@ -18,15 +18,17 @@ import java.util.concurrent.CompletableFuture;
 
 public interface Follower extends Identifiable {
 
-    record RetryConf(Duration delay, Duration jitter, Duration backoffDelay, Duration backoffMaxDelay) {}
+    record RetryConf(Duration delay, Duration jitter, Duration backoffDelay, Duration backoffMaxDelay) {
+    }
+
     RetryPolicyBuilder<Object> DEF_RETRY_POLICY_FOLLOW_BUILDER = RetryPolicy.builder()
-            .handle(StatusRuntimeException .class)
-                                        .handleIf(e -> {
-        StatusRuntimeException sre = (StatusRuntimeException) e;
-        return sre.getStatus() == Status.DEADLINE_EXCEEDED
-                || sre.getStatus() == Status.UNAUTHENTICATED
-                || sre.getStatus() == Status.UNAVAILABLE;
-    })
+            .handle(StatusRuntimeException.class)
+            .handleIf(e -> {
+                StatusRuntimeException sre = (StatusRuntimeException) e;
+                return sre.getStatus() == Status.DEADLINE_EXCEEDED
+                        || sre.getStatus() == Status.UNAUTHENTICATED
+                        || sre.getStatus() == Status.UNAVAILABLE;
+            })
             .withDelay(Duration.ofSeconds(10))
             .withMaxRetries(-1)
             .withJitter(Duration.ofMillis(3000));
@@ -35,23 +37,23 @@ public interface Follower extends Identifiable {
 
     InterestAPIGrpc.InterestAPIBlockingStub getInterestAPIBlockingStub();
 
-    default Iterator<FetchInterestResponse> follow(FeedID feedId)  {
+    default Iterator<FetchInterestResponse> follow(FeedID feedId) {
         FetchInterestRequest request = newRequest(feedId);
         return getInterestAPIBlockingStub().fetchInterests(request);
     }
 
-    default void followNoRetry(FeedID feedId, StreamObserver<FetchInterestResponse> observer)  {
+    default void followNoRetry(FeedID feedId, StreamObserver<FetchInterestResponse> observer) {
         FetchInterestRequest request = newRequest(feedId);
         getInterestAPIStub().fetchInterests(request, observer);
     }
 
     default void follow(FeedID feedID, RetryConf retryConf, StreamObserver<FetchInterestResponse> observer) {
         Failsafe.with(DEF_RETRY_POLICY_FOLLOW_BUILDER
-                        .withJitter(retryConf.jitter)
-                        .withDelay(retryConf.delay)
+                .withJitter(retryConf.jitter)
+                .withDelay(retryConf.delay)
                 .build()).runAsync(() -> {
             CompletableFuture<Void> result = new CompletableFuture<>();
-            followNoRetry(feedID, new StreamObserver<>(){
+            followNoRetry(feedID, new StreamObserver<>() {
 
                 @Override
                 public void onNext(FetchInterestResponse value) {

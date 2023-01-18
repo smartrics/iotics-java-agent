@@ -5,8 +5,6 @@ import com.iotics.api.*;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import smartrics.iotics.space.Builders;
 
 import java.util.concurrent.Executor;
@@ -36,26 +34,7 @@ public interface Maker extends Identifiable, Describer {
     }
 
 
-
-
     private static FutureCallback<DescribeTwinResponse> describeCallback(Maker maker, SettableFuture<TwinID> future, Executor executor) {
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
         return new FutureCallback<>() {

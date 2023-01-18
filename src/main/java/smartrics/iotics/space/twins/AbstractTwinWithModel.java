@@ -1,12 +1,9 @@
 package smartrics.iotics.space.twins;
 
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.protobuf.ByteString;
-import com.iotics.api.*;
+import com.iotics.api.TwinAPIGrpc;
+import com.iotics.api.TwinID;
 import com.iotics.sdk.identity.SimpleIdentityManager;
-import smartrics.iotics.space.Builders;
 
-import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Executor;
 
 public abstract class AbstractTwinWithModel extends AbstractTwin {

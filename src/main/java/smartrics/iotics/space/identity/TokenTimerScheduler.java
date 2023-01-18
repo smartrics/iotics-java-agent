@@ -23,7 +23,7 @@ public class TokenTimerScheduler implements TokenScheduler {
 
     @Override
     public void schedule() {
-        if(timer == null) {
+        if (timer == null) {
             return;
         }
         this.timer.schedule(new TimerTask() {
@@ -39,7 +39,7 @@ public class TokenTimerScheduler implements TokenScheduler {
 
     @Override
     public void cancel() {
-        if(timer!=null) {
+        if (timer != null) {
             this.timer.cancel();
         }
     }
@@ -47,7 +47,7 @@ public class TokenTimerScheduler implements TokenScheduler {
     @Override
     public String validToken() {
         String value = validToken.get();
-        if(value == null) {
+        if (value == null) {
             throw new IllegalStateException("not scheduled");
         }
         return value;

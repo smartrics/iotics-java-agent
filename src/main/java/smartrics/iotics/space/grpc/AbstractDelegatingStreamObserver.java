@@ -1,8 +1,6 @@
 package smartrics.iotics.space.grpc;
 
 import io.grpc.stub.StreamObserver;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public abstract class AbstractDelegatingStreamObserver<T> implements StreamObserver<T> {
 

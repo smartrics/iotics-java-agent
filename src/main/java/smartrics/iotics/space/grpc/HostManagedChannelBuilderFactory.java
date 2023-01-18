@@ -4,7 +4,6 @@ import com.iotics.sdk.identity.SimpleIdentityManager;
 import io.grpc.ClientInterceptor;
 import io.grpc.ManagedChannelBuilder;
 import smartrics.iotics.space.identity.TokenScheduler;
-import smartrics.iotics.space.identity.TokenTimerScheduler;
 import smartrics.iotics.space.identity.TokenTimerSchedulerBuilder;
 
 import java.time.Duration;
