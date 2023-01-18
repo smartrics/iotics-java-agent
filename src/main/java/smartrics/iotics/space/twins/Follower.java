@@ -6,6 +6,7 @@ import dev.failsafe.Failsafe;
 import dev.failsafe.FailsafeException;
 import dev.failsafe.RetryPolicy;
 import dev.failsafe.RetryPolicyBuilder;
+import dev.failsafe.function.CheckedPredicate;
 import io.grpc.Context;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
@@ -20,9 +21,9 @@ import java.util.Iterator;
 import java.util.concurrent.CompletableFuture;
 
 public interface Follower extends Identifiable {
-    Logger LOGGER = LoggerFactory.getLogger(FindAndBindTwin.class);
 
-    RetryPolicyBuilder<Object> DEF_RETRY_POLICY_FOLLOW = RetryPolicy.builder()
+    record RetryConf(Duration delay, Duration jitter, Duration backoffDelay, Duration backoffMaxDelay) {}
+    RetryPolicyBuilder<Object> DEF_RETRY_POLICY_FOLLOW_BUILDER = RetryPolicy.builder()
             .handle(StatusRuntimeException .class)
                                         .handleIf(e -> {
         StatusRuntimeException sre = (StatusRuntimeException) e;
@@ -38,77 +39,46 @@ public interface Follower extends Identifiable {
 
     InterestAPIGrpc.InterestAPIBlockingStub getInterestAPIBlockingStub();
 
-    default void followNoRetry(FeedID feedId, StreamObserver<FetchInterestResponse> responseStreamObserver)  {
-        getCancellableContext().run(() -> {
-            FetchInterestRequest request = newRequest(feedId);
-            getInterestAPIStub().fetchInterests(request, responseStreamObserver);
-        });
-    }
-
     default Iterator<FetchInterestResponse> follow(FeedID feedId)  {
         FetchInterestRequest request = newRequest(feedId);
         return getInterestAPIBlockingStub().fetchInterests(request);
     }
 
-    default void followAsync(FeedID feedId, StreamObserver<FetchInterestResponse> observer)  {
+    default void followNoRetry(FeedID feedId, StreamObserver<FetchInterestResponse> observer)  {
         FetchInterestRequest request = newRequest(feedId);
         getInterestAPIStub().fetchInterests(request, observer);
     }
 
-    default CompletableFuture<Void> follow(FeedID feedID, StreamObserver<FetchInterestResponse> responseStreamObserver) {
-        return follow(feedID, DEF_RETRY_POLICY_FOLLOW.build(), responseStreamObserver);
-    }
+    default void follow(FeedID feedID, RetryConf retryConf, StreamObserver<FetchInterestResponse> observer) {
+        Failsafe.with(DEF_RETRY_POLICY_FOLLOW_BUILDER
+                        .withJitter(retryConf.jitter)
+                        .withDelay(retryConf.delay)
+                .build()).run(() -> {
+            CompletableFuture<Void> result = new CompletableFuture<>();
+            followNoRetry(feedID, new StreamObserver<>(){
 
-    default CompletableFuture<Void> follow2(FeedID feedID, RetryPolicy<Object> retryPolicy,
-                                           StreamObserver<FetchInterestResponse> responseStreamObserver) {
-        try {
-            return Failsafe.with(retryPolicy).runAsync(() -> {
-                getCancellableContext().run(() -> {
-                    Iterator<FetchInterestResponse> iterator = follow(feedID);
-                    LOGGER.debug("followed {}.{}", feedID.getTwinId(), feedID.getId());
-                    while (iterator.hasNext()) {
-                        FetchInterestResponse fetchInterestResponse = iterator.next();
-                        responseStreamObserver.onNext(fetchInterestResponse);
-                    }
-                    LOGGER.debug("follow iterator complete for {}.{}", feedID.getTwinId(), feedID.getId());
-                    responseStreamObserver.onCompleted();
-                });
-            });
-        } catch (FailsafeException t) {
-            LOGGER.debug("exception when retrying", t);
-            // when completed the retries
-            responseStreamObserver.onError(t);
-        } catch (Throwable t) {
-            // for any non retriable exception
-            responseStreamObserver.onError(t);
-        }
-        return new CompletableFuture<>();
-    }
+                @Override
+                public void onNext(FetchInterestResponse value) {
+                    observer.onNext(value);
+                }
 
-    default CompletableFuture<Void> follow(FeedID feedID, RetryPolicy<Object> retryPolicy,
-                                           StreamObserver<FetchInterestResponse> responseStreamObserver) {
-        try {
-            return Failsafe.with(retryPolicy).runAsync(() -> {
-                getCancellableContext().run(() -> {
-                    Iterator<FetchInterestResponse> iterator = follow(feedID);
-                    LOGGER.debug("followed {}.{}", feedID.getTwinId(), feedID.getId());
-                    while (iterator.hasNext()) {
-                        FetchInterestResponse fetchInterestResponse = iterator.next();
-                        responseStreamObserver.onNext(fetchInterestResponse);
-                    }
-                    LOGGER.debug("follow iterator complete for {}.{}", feedID.getTwinId(), feedID.getId());
-                    responseStreamObserver.onCompleted();
-                });
+                @Override
+                public void onError(Throwable t) {
+                    t.printStackTrace();
+                    result.completeExceptionally(t);
+                }
+
+                @Override
+                public void onCompleted() {
+                    result.complete(null);
+                }
             });
-        } catch (FailsafeException t) {
-            LOGGER.debug("exception when retrying", t);
-            // when completed the retries
-            responseStreamObserver.onError(t);
-        } catch (Throwable t) {
-            // for any non retriable exception
-            responseStreamObserver.onError(t);
-        }
-        return new CompletableFuture<>();
+            try {
+                result.get();
+            } catch (Exception e) {
+                throw e.getCause();
+            }
+        });
     }
 
     // this is needed to stop the follow when the application needs to stop

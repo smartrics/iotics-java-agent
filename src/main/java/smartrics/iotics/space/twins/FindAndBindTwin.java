@@ -59,6 +59,7 @@ public class FindAndBindTwin extends AbstractTwinWithModel implements Follower, 
 
     private final AtomicLong lastUpdateMs = new AtomicLong(-1);
     private final long shareEveryMs;
+    private final RetryConf retryConf;
 
     public FindAndBindTwin(SimpleIdentityManager sim,
                            String keyName,
@@ -70,7 +71,8 @@ public class FindAndBindTwin extends AbstractTwinWithModel implements Follower, 
                            Executor executor,
                            TwinID modelDid,
                            Timer shareDataTimer,
-                           Duration shareEvery) {
+                           Duration shareEvery,
+                           RetryConf retryConf) {
         super(sim, keyName, twinStub, executor, modelDid);
         this.feedStub = feedStub;
         this.interestStub = interestStub;
@@ -79,13 +81,13 @@ public class FindAndBindTwin extends AbstractTwinWithModel implements Follower, 
         this.followFutures = new ConcurrentHashMap<>();
         this.shareEveryMs = shareEvery.getSeconds() * 1000;
         this.gson = new Gson();
+        this.retryConf = retryConf;
         shareDataTimer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
                 try{
                     shareStatus();
                 }catch (Exception e) {
-                    e.printStackTrace();
                     LOGGER.warn("exception when sharing", e);
                 }
             }
@@ -94,17 +96,13 @@ public class FindAndBindTwin extends AbstractTwinWithModel implements Follower, 
     }
 
     public void shareStatus() {
+        if (!shouldShare()) return;
         Map<String, Object> data = new HashMap<>();
         data.put(FOLLOWING_FEEDS, feedsFollowed.get());
         data.put(RECEIVED_DATA_POINTS, datapointReceived.get());
         data.put(FOUND_TWINS, twinsFound.get());
         data.put(ERRORS_COUNT, errorsCount.get());
         data.put(TIMESTAMP, LocalDateTime.now().atOffset(ZoneOffset.UTC).format(dtf));
-
-        if(System.currentTimeMillis() - this.shareEveryMs > this.lastUpdateMs.get()) {
-            // no need to share since nothing has updated yet
-            return;
-        }
 
         LOGGER.info("sharing counters data: {}", data);
         toCompletable(feedStub.shareFeedData(ShareFeedDataRequest.newBuilder()
@@ -126,7 +124,15 @@ public class FindAndBindTwin extends AbstractTwinWithModel implements Follower, 
                 });
     }
 
-    public void updateMeta(String content, String type) throws InvalidProtocolBufferException {
+    private boolean shouldShare() {
+        if(System.currentTimeMillis() - this.shareEveryMs > this.lastUpdateMs.get()) {
+            // no need to share since nothing has updated yet
+            return false;
+        }
+        return true;
+    }
+
+    public void updateMeta(String content, String type) {
         toCompletable(getTwinAPIFutureStub().updateTwin(UpdateTwinRequest.newBuilder()
                 .setHeaders(Builders.newHeadersBuilder(getAgentIdentity().did()).build())
                 .setArgs(UpdateTwinRequest.Arguments.newBuilder()
@@ -271,7 +277,7 @@ public class FindAndBindTwin extends AbstractTwinWithModel implements Follower, 
                     FindAndBindTwin.this.twinsFound.incrementAndGet();
                     FindAndBindTwin.this.lastUpdateMs.set(System.currentTimeMillis());
                     for (SearchResponse.FeedDetails feedDetails : twinDetails.getFeedsList()) {
-                        followAsync(feedDetails.getFeedId(), new StreamObserver<>() {
+                        follow(feedDetails.getFeedId(), FindAndBindTwin.this.retryConf, new StreamObserver<>() {
                             @Override
                             public void onNext(FetchInterestResponse value) {
                                 try {
