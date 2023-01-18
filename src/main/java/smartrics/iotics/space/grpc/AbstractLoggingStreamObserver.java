@@ -14,7 +14,7 @@ public abstract class AbstractLoggingStreamObserver<T> implements StreamObserver
 
     @Override
     public void onError(Throwable throwable) {
-        LOGGER.info("Wrapped stream observer for {} error: {}", logEntity, throwable.getMessage());
+        LOGGER.error("Wrapped stream observer for {}", logEntity, throwable);
     }
 
     @Override

@@ -30,9 +30,9 @@ public interface Follower extends Identifiable {
                 || sre.getStatus() == Status.UNAUTHENTICATED
                 || sre.getStatus() == Status.UNAVAILABLE;
     })
-            .withDelay(Duration.ofSeconds(1))
+            .withDelay(Duration.ofSeconds(10))
             .withMaxRetries(-1)
-            .withJitter(Duration.ofMillis(100));
+            .withJitter(Duration.ofMillis(3000));
 
     InterestAPIGrpc.InterestAPIStub getInterestAPIStub();
 
@@ -47,13 +47,42 @@ public interface Follower extends Identifiable {
 
     default Iterator<FetchInterestResponse> follow(FeedID feedId)  {
         FetchInterestRequest request = newRequest(feedId);
-        Iterator<FetchInterestResponse> it = getInterestAPIBlockingStub().fetchInterests(request);
-        LOGGER.info("followed {}", feedId);
-        return it;
+        return getInterestAPIBlockingStub().fetchInterests(request);
+    }
+
+    default void followAsync(FeedID feedId, StreamObserver<FetchInterestResponse> observer)  {
+        FetchInterestRequest request = newRequest(feedId);
+        getInterestAPIStub().fetchInterests(request, observer);
     }
 
     default CompletableFuture<Void> follow(FeedID feedID, StreamObserver<FetchInterestResponse> responseStreamObserver) {
         return follow(feedID, DEF_RETRY_POLICY_FOLLOW.build(), responseStreamObserver);
+    }
+
+    default CompletableFuture<Void> follow2(FeedID feedID, RetryPolicy<Object> retryPolicy,
+                                           StreamObserver<FetchInterestResponse> responseStreamObserver) {
+        try {
+            return Failsafe.with(retryPolicy).runAsync(() -> {
+                getCancellableContext().run(() -> {
+                    Iterator<FetchInterestResponse> iterator = follow(feedID);
+                    LOGGER.debug("followed {}.{}", feedID.getTwinId(), feedID.getId());
+                    while (iterator.hasNext()) {
+                        FetchInterestResponse fetchInterestResponse = iterator.next();
+                        responseStreamObserver.onNext(fetchInterestResponse);
+                    }
+                    LOGGER.debug("follow iterator complete for {}.{}", feedID.getTwinId(), feedID.getId());
+                    responseStreamObserver.onCompleted();
+                });
+            });
+        } catch (FailsafeException t) {
+            LOGGER.debug("exception when retrying", t);
+            // when completed the retries
+            responseStreamObserver.onError(t);
+        } catch (Throwable t) {
+            // for any non retriable exception
+            responseStreamObserver.onError(t);
+        }
+        return new CompletableFuture<>();
     }
 
     default CompletableFuture<Void> follow(FeedID feedID, RetryPolicy<Object> retryPolicy,
@@ -62,20 +91,21 @@ public interface Follower extends Identifiable {
             return Failsafe.with(retryPolicy).runAsync(() -> {
                 getCancellableContext().run(() -> {
                     Iterator<FetchInterestResponse> iterator = follow(feedID);
+                    LOGGER.debug("followed {}.{}", feedID.getTwinId(), feedID.getId());
                     while (iterator.hasNext()) {
                         FetchInterestResponse fetchInterestResponse = iterator.next();
                         responseStreamObserver.onNext(fetchInterestResponse);
                     }
+                    LOGGER.debug("follow iterator complete for {}.{}", feedID.getTwinId(), feedID.getId());
                     responseStreamObserver.onCompleted();
                 });
-
             });
         } catch (FailsafeException t) {
             LOGGER.debug("exception when retrying", t);
             // when completed the retries
             responseStreamObserver.onError(t);
         } catch (Throwable t) {
-            // for any non retryable exception
+            // for any non retriable exception
             responseStreamObserver.onError(t);
         }
         return new CompletableFuture<>();

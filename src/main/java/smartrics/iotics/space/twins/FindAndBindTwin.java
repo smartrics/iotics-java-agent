@@ -248,36 +248,47 @@ public class FindAndBindTwin extends AbstractTwinWithModel implements Follower, 
         StreamObserver<SearchResponse.TwinDetails> resultsStreamObserver = new StreamObserver<>() {
             @Override
             public void onNext(SearchResponse.TwinDetails twinDetails) {
-                TwinDatabag twinData = new TwinDatabag(twinDetails);
-                twinStreamObserver.onNext(twinData);
-                FindAndBindTwin.this.twinsFound.incrementAndGet();
-                FindAndBindTwin.this.lastUpdateMs.set(System.currentTimeMillis());
-                for (SearchResponse.FeedDetails feedDetails : twinDetails.getFeedsList()) {
-                    CompletableFuture<Void> followFut = follow(feedDetails.getFeedId(), new StreamObserver<>() {
-                        @Override
-                        public void onNext(FetchInterestResponse value) {
-                            FindAndBindTwin.this.datapointReceived.incrementAndGet();
-                            FindAndBindTwin.this.lastUpdateMs.set(System.currentTimeMillis());
-                            feedDataStreamObserver.onNext(new FeedDatabag(twinData, feedDetails, value));
-                        }
-
-                        @Override
-                        public void onError(Throwable t) {
-                            FindAndBindTwin.this.feedsFollowed.decrementAndGet();
-                            FindAndBindTwin.this.lastUpdateMs.set(System.currentTimeMillis());
-                            feedDataStreamObserver.onError(t);
-                        }
-
-                        @Override
-                        public void onCompleted() {
-                            FindAndBindTwin.this.feedsFollowed.decrementAndGet();
-                            FindAndBindTwin.this.lastUpdateMs.set(System.currentTimeMillis());
-                            feedDataStreamObserver.onCompleted();
-                        }
-                    });
-                    FindAndBindTwin.this.feedsFollowed.incrementAndGet();
+                try {
+                    TwinDatabag twinData = new TwinDatabag(twinDetails);
+                    twinStreamObserver.onNext(twinData);
+                    FindAndBindTwin.this.twinsFound.incrementAndGet();
                     FindAndBindTwin.this.lastUpdateMs.set(System.currentTimeMillis());
-                    followFutures.put(feedDetails.getFeedId(), followFut);
+                    for (SearchResponse.FeedDetails feedDetails : twinDetails.getFeedsList()) {
+                        followAsync(feedDetails.getFeedId(), new StreamObserver<>() {
+                            @Override
+                            public void onNext(FetchInterestResponse value) {
+                                try {
+                                    FindAndBindTwin.this.datapointReceived.incrementAndGet();
+                                    FindAndBindTwin.this.lastUpdateMs.set(System.currentTimeMillis());
+                                    feedDataStreamObserver.onNext(new FeedDatabag(twinData, feedDetails, value));
+                                } catch (RuntimeException e) {
+                                    LOGGER.debug("exception processing next feed data", e);
+                                    throw e;
+                                }
+                            }
+
+                            @Override
+                            public void onError(Throwable t) {
+                                FindAndBindTwin.this.feedsFollowed.decrementAndGet();
+                                FindAndBindTwin.this.lastUpdateMs.set(System.currentTimeMillis());
+                                feedDataStreamObserver.onError(t);
+                            }
+
+                            @Override
+                            public void onCompleted() {
+                                FindAndBindTwin.this.feedsFollowed.decrementAndGet();
+                                FindAndBindTwin.this.lastUpdateMs.set(System.currentTimeMillis());
+                                feedDataStreamObserver.onCompleted();
+                            }
+                        });
+                        FindAndBindTwin.this.feedsFollowed.incrementAndGet();
+                        FindAndBindTwin.this.lastUpdateMs.set(System.currentTimeMillis());
+                        followFutures.put(feedDetails.getFeedId(), new CompletableFuture<>());
+                    }
+
+                }catch (RuntimeException e) {
+                    LOGGER.debug("exception processing next search response", e);
+                    throw e;
                 }
             }
 
