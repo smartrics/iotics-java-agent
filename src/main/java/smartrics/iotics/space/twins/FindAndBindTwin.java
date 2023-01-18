@@ -36,7 +36,7 @@ import static smartrics.iotics.space.grpc.ListenableFutureAdapter.toCompletable;
 public class FindAndBindTwin extends AbstractTwinWithModel implements Follower, Publisher, Searcher {
 
     public static final String COUNTERS_FEED_ID = "counters";
-    private static Logger LOGGER = LoggerFactory.getLogger(FindAndBindTwin.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(FindAndBindTwin.class);
 
     public static final String RECEIVED_DATA_POINTS = "receivedDataPoints";
     public static final String FOLLOWING_FEEDS = "followingFeeds";
@@ -44,7 +44,7 @@ public class FindAndBindTwin extends AbstractTwinWithModel implements Follower, 
     public static final String ERRORS_COUNT = "errorsCount";
     public static final String TIMESTAMP = "timestamp";
 
-    private static DateTimeFormatter dtf = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ssX");
+    private static final DateTimeFormatter dtf = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ssX");
     private final FeedAPIGrpc.FeedAPIFutureStub feedStub;
     private final InterestAPIGrpc.InterestAPIStub interestStub;
     private final SearchAPIGrpc.SearchAPIStub searchStub;
@@ -125,11 +125,8 @@ public class FindAndBindTwin extends AbstractTwinWithModel implements Follower, 
     }
 
     private boolean shouldShare() {
-        if(System.currentTimeMillis() - this.shareEveryMs > this.lastUpdateMs.get()) {
-            // no need to share since nothing has updated yet
-            return false;
-        }
-        return true;
+        // no need to share since nothing has updated yet
+        return System.currentTimeMillis() - this.shareEveryMs <= this.lastUpdateMs.get();
     }
 
     public void updateMeta(String content, String type) {

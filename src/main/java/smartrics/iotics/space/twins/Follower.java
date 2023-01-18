@@ -3,17 +3,13 @@ package smartrics.iotics.space.twins;
 import com.google.protobuf.BoolValue;
 import com.iotics.api.*;
 import dev.failsafe.Failsafe;
-import dev.failsafe.FailsafeException;
 import dev.failsafe.RetryPolicy;
 import dev.failsafe.RetryPolicyBuilder;
-import dev.failsafe.function.CheckedPredicate;
 import io.grpc.Context;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import smartrics.iotics.space.Builders;
 
 import java.time.Duration;
@@ -53,7 +49,7 @@ public interface Follower extends Identifiable {
         Failsafe.with(DEF_RETRY_POLICY_FOLLOW_BUILDER
                         .withJitter(retryConf.jitter)
                         .withDelay(retryConf.delay)
-                .build()).run(() -> {
+                .build()).runAsync(() -> {
             CompletableFuture<Void> result = new CompletableFuture<>();
             followNoRetry(feedID, new StreamObserver<>(){
 
