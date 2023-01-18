@@ -20,5 +20,7 @@ public interface UriConstants {
     String ON_OWL_CLASS_VALUE = ON_OWL + "Class";
     String ON_RDFS_CLASS_VALUE = ON_RDFS + "Class";
 
+    String IOTICS_CUSTOM_SEARCH_VALUE_PROP = "http://data.iotics.com/ont/searchQuery";
+    String IOTICS_CUSTOM_SEARCH_TYPE_PROP = "http://data.iotics.com/ont/searchType";
 
 }
