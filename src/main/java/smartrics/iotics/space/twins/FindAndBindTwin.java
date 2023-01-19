@@ -274,7 +274,7 @@ public class FindAndBindTwin extends AbstractTwinWithModel implements Follower, 
                     FindAndBindTwin.this.lastUpdateMs.set(System.currentTimeMillis());
                     for (SearchResponse.FeedDetails feedDetails : twinDetails.getFeedsList()) {
                         FeedID feedID = feedDetails.getFeedId();
-                        LOGGER.warn("about to follow {}/{} in host {}", feedID.getTwinId(), feedID.getId(), feedID.getHostId());
+                        LOGGER.debug("about to follow {}/{} in host {}", feedID.getTwinId(), feedID.getId(), feedID.getHostId());
                         follow(feedID, FindAndBindTwin.this.retryConf, new StreamObserver<>() {
                             @Override
                             public void onNext(FetchInterestResponse value) {
