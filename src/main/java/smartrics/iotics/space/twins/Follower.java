@@ -10,6 +10,8 @@ import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import smartrics.iotics.space.Builders;
 
 import java.time.Duration;
@@ -48,6 +50,8 @@ public interface Follower extends Identifiable {
     }
 
     default void follow(FeedID feedID, RetryConf retryConf, StreamObserver<FetchInterestResponse> observer) {
+        Logger LOGGER = LoggerFactory.getLogger(FindAndBindTwin.class);
+        CompletableFuture<FeedID> followResult = new CompletableFuture<>();
         Failsafe.with(DEF_RETRY_POLICY_FOLLOW_BUILDER
                 .withJitter(retryConf.jitter)
                 .withDelay(retryConf.delay)
@@ -62,7 +66,7 @@ public interface Follower extends Identifiable {
 
                 @Override
                 public void onError(Throwable t) {
-                    t.printStackTrace();
+                    LOGGER.warn("error when following {}/{} in host {}: {}", feedID.getTwinId(), feedID.getId(), feedID.getHostId(), t.getMessage());
                     result.completeExceptionally(t);
                 }
 
