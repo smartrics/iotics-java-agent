@@ -1,31 +1,22 @@
 package smartrics.iotics.space.twins;
 
-import com.iotics.api.TwinAPIGrpc;
 import com.iotics.sdk.identity.Identity;
 import com.iotics.sdk.identity.SimpleIdentityManager;
+import smartrics.iotics.space.grpc.IoticsApi;
 
 import java.util.concurrent.Executor;
 
 public abstract class AbstractTwin implements Identifiable, Maker {
 
-    private final SimpleIdentityManager sim;
     private final Identity identity;
     private final Executor executor;
+    private final IoticsApi api;
 
-    private final TwinAPIGrpc.TwinAPIFutureStub twinStub;
-
-    public AbstractTwin(SimpleIdentityManager sim, String keyName,
-                        TwinAPIGrpc.TwinAPIFutureStub stub,
+    public AbstractTwin(IoticsApi api, String keyName,
                         Executor executor) {
-        this.sim = sim;
-        this.identity = this.sim.newTwinIdentity(keyName);
+        this.api = api;
+        this.identity = this.api.getSim().newTwinIdentity(keyName);
         this.executor = executor;
-        this.twinStub = stub;
-    }
-
-    @Override
-    public TwinAPIGrpc.TwinAPIFutureStub getTwinAPIFutureStub() {
-        return this.twinStub;
     }
 
     @Override
@@ -35,11 +26,12 @@ public abstract class AbstractTwin implements Identifiable, Maker {
 
     @Override
     public Identity getAgentIdentity() {
-        return getSim().agentIdentity();
+        return ((SimpleIdentityManager) ioticsApi().getSim()).agentIdentity();
     }
 
-    protected SimpleIdentityManager getSim() {
-        return this.sim;
+    @Override
+    public IoticsApi ioticsApi() {
+        return api;
     }
 
 }

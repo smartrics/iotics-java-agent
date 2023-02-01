@@ -1,18 +1,17 @@
 package smartrics.iotics.space.twins;
 
-import com.iotics.api.*;
+import com.iotics.api.SearchRequest;
+import com.iotics.api.SearchResponse;
+import com.iotics.api.SparqlQueryRequest;
+import com.iotics.api.SparqlQueryResponse;
 import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import smartrics.iotics.space.Builders;
 import smartrics.iotics.space.grpc.AbstractLoggingStreamObserver;
 
-public interface Searcher extends Identifiable {
+public interface Searcher extends Identifiable, ApiUser {
     Logger LOGGER = LoggerFactory.getLogger(AbstractLoggingStreamObserver.class);
-
-    SearchAPIGrpc.SearchAPIStub getSearchAPIStub();
-
-    MetaAPIGrpc.MetaAPIStub getMetaAPIStub();
 
     default void query(SparqlQueryRequest.Payload payload, StreamObserver<String> result) {
         SparqlQueryRequest request = SparqlQueryRequest.newBuilder()
@@ -21,7 +20,7 @@ public interface Searcher extends Identifiable {
                 .build();
 
         NetChunks chunks = new NetChunks();
-        getMetaAPIStub().sparqlQuery(request, new StreamObserver<>() {
+        ioticsApi().metaAPIStub().sparqlQuery(request, new StreamObserver<>() {
             @Override
             public void onNext(SparqlQueryResponse response) {
                 if (response.getPayload().hasStatus()) {
@@ -78,7 +77,7 @@ public interface Searcher extends Identifiable {
                 .setPayload(searchRequestPayload)
                 .build();
         try {
-            getSearchAPIStub().synchronousSearch(request, obs);
+            ioticsApi().searchAPIStub().synchronousSearch(request, obs);
         } catch (Exception e) {
             e.printStackTrace();
             twinDetailsStreamObserver.onError(e);

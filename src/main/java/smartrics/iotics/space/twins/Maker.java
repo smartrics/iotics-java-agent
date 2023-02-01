@@ -18,7 +18,7 @@ public interface Maker extends Identifiable, Describer {
     }
 
     default ListenableFuture<DeleteTwinResponse> delete() {
-        return getTwinAPIFutureStub().deleteTwin(DeleteTwinRequest.newBuilder()
+        return ioticsApi().twinAPIFutureStub().deleteTwin(DeleteTwinRequest.newBuilder()
                 .setHeaders(Builders.newHeadersBuilder(getAgentIdentity().did())
                         .build())
                 .setArgs(DeleteTwinRequest.Arguments.newBuilder()

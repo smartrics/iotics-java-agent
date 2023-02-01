@@ -6,12 +6,12 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.util.JsonFormat;
 import com.iotics.api.*;
-import com.iotics.sdk.identity.SimpleIdentityManager;
 import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import smartrics.iotics.space.Builders;
 import smartrics.iotics.space.grpc.FeedDatabag;
+import smartrics.iotics.space.grpc.IoticsApi;
 import smartrics.iotics.space.grpc.NoopStreamObserver;
 import smartrics.iotics.space.grpc.TwinDatabag;
 
@@ -35,20 +35,13 @@ import static smartrics.iotics.space.grpc.ListenableFutureAdapter.toCompletable;
 public class FindAndBindTwin extends AbstractTwinWithModel implements Follower, Publisher, Searcher {
 
     public static final String COUNTERS_FEED_ID = "counters";
-    private static final Logger LOGGER = LoggerFactory.getLogger(FindAndBindTwin.class);
-
     public static final String RECEIVED_DATA_POINTS = "receivedDataPoints";
     public static final String FOLLOWING_FEEDS = "followingFeeds";
     public static final String FOUND_TWINS = "foundTwins";
     public static final String ERRORS_COUNT = "errorsCount";
     public static final String TIMESTAMP = "timestamp";
-
+    private static final Logger LOGGER = LoggerFactory.getLogger(FindAndBindTwin.class);
     private static final DateTimeFormatter dtf = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ssX");
-    private final FeedAPIGrpc.FeedAPIFutureStub feedStub;
-    private final InterestAPIGrpc.InterestAPIStub interestStub;
-    private final SearchAPIGrpc.SearchAPIStub searchStub;
-    private final MetaAPIGrpc.MetaAPIStub metaStub;
-    private final InterestAPIGrpc.InterestAPIBlockingStub interestBlockingStub;
     private final Map<FeedID, CompletableFuture<Void>> followFutures;
 
     private final AtomicLong twinsFound = new AtomicLong(0);
@@ -61,25 +54,14 @@ public class FindAndBindTwin extends AbstractTwinWithModel implements Follower, 
     private final long shareEveryMs;
     private final RetryConf retryConf;
 
-    public FindAndBindTwin(SimpleIdentityManager sim,
+    public FindAndBindTwin(IoticsApi api,
                            String keyName,
-                           TwinAPIGrpc.TwinAPIFutureStub twinStub,
-                           FeedAPIGrpc.FeedAPIFutureStub feedStub,
-                           InterestAPIGrpc.InterestAPIStub interestStub,
-                           InterestAPIGrpc.InterestAPIBlockingStub interestBlockingStub,
-                           SearchAPIGrpc.SearchAPIStub searchStub,
-                           MetaAPIGrpc.MetaAPIStub metaStub,
                            Executor executor,
                            TwinID modelDid,
                            Timer shareDataTimer,
                            Duration shareEvery,
                            RetryConf retryConf) {
-        super(sim, keyName, twinStub, executor, modelDid);
-        this.feedStub = feedStub;
-        this.interestStub = interestStub;
-        this.searchStub = searchStub;
-        this.metaStub = metaStub;
-        this.interestBlockingStub = interestBlockingStub;
+        super(api, keyName, executor, modelDid);
         this.followFutures = new ConcurrentHashMap<>();
         this.shareEveryMs = shareEvery.getSeconds() * 1000;
         this.gson = new Gson();
@@ -107,7 +89,7 @@ public class FindAndBindTwin extends AbstractTwinWithModel implements Follower, 
         data.put(TIMESTAMP, LocalDateTime.now().atOffset(ZoneOffset.UTC).format(dtf));
 
         LOGGER.info("sharing counters data: {}", data);
-        toCompletable(feedStub.shareFeedData(ShareFeedDataRequest.newBuilder()
+        toCompletable(ioticsApi().feedAPIFutureStub().shareFeedData(ShareFeedDataRequest.newBuilder()
                 .setHeaders(Builders.newHeadersBuilder(getAgentIdentity().did()).build())
                 .setArgs(ShareFeedDataRequest.Arguments.newBuilder()
                         .setFeedId(FeedID.newBuilder()
@@ -132,7 +114,7 @@ public class FindAndBindTwin extends AbstractTwinWithModel implements Follower, 
     }
 
     public void updateMeta(String content, String type) {
-        toCompletable(getTwinAPIFutureStub().updateTwin(UpdateTwinRequest.newBuilder()
+        toCompletable(ioticsApi().twinAPIFutureStub().updateTwin(UpdateTwinRequest.newBuilder()
                 .setHeaders(Builders.newHeadersBuilder(getAgentIdentity().did()).build())
                 .setArgs(UpdateTwinRequest.Arguments.newBuilder()
                         .setTwinId(TwinID.newBuilder().setId(getIdentity().did()).build())
@@ -172,7 +154,7 @@ public class FindAndBindTwin extends AbstractTwinWithModel implements Follower, 
 
     @Override
     public ListenableFuture<UpsertTwinResponse> make() {
-        return getTwinAPIFutureStub().upsertTwin(UpsertTwinRequest.newBuilder()
+        return ioticsApi().twinAPIFutureStub().upsertTwin(UpsertTwinRequest.newBuilder()
                 .setHeaders(Builders.newHeadersBuilder(getAgentIdentity().did()).build())
                 .setPayload(UpsertTwinRequest.Payload.newBuilder()
                         .setTwinId(TwinID.newBuilder().setId(getIdentity().did()).build())
@@ -231,33 +213,8 @@ public class FindAndBindTwin extends AbstractTwinWithModel implements Follower, 
                 .build());
     }
 
-    @Override
-    public InterestAPIGrpc.InterestAPIStub getInterestAPIStub() {
-        return this.interestStub;
-    }
-
-    @Override
-    public InterestAPIGrpc.InterestAPIBlockingStub getInterestAPIBlockingStub() {
-        return this.interestBlockingStub;
-    }
-
-    @Override
-    public FeedAPIGrpc.FeedAPIFutureStub getFeedAPIFutureStub() {
-        return this.feedStub;
-    }
-
-    @Override
-    public SearchAPIGrpc.SearchAPIStub getSearchAPIStub() {
-        return this.searchStub;
-    }
-
-    @Override
-    public MetaAPIGrpc.MetaAPIStub getMetaAPIStub() {
-        return this.metaStub;
-    }
-
     public CompletableFuture<Void> findAndBind(SearchRequest.Payload searchRequestPayload, StreamObserver<FeedDatabag> streamObserver) {
-        return this.findAndBind(searchRequestPayload, new NoopStreamObserver<TwinDatabag>(), streamObserver);
+        return this.findAndBind(searchRequestPayload, new NoopStreamObserver<>(), streamObserver);
     }
 
     public CompletableFuture<Void> findAndBind(SearchRequest.Payload searchRequestPayload, StreamObserver<TwinDatabag> twinStreamObserver, StreamObserver<FeedDatabag> feedDataStreamObserver) {
@@ -338,5 +295,4 @@ public class FindAndBindTwin extends AbstractTwinWithModel implements Follower, 
         this.search(searchRequestPayload, resultsStreamObserver);
         return resFuture;
     }
-
 }
