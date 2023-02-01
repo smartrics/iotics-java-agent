@@ -47,6 +47,7 @@ public class FindAndBindTwin extends AbstractTwinWithModel implements Follower, 
     private final FeedAPIGrpc.FeedAPIFutureStub feedStub;
     private final InterestAPIGrpc.InterestAPIStub interestStub;
     private final SearchAPIGrpc.SearchAPIStub searchStub;
+    private final MetaAPIGrpc.MetaAPIStub metaStub;
     private final InterestAPIGrpc.InterestAPIBlockingStub interestBlockingStub;
     private final Map<FeedID, CompletableFuture<Void>> followFutures;
 
@@ -67,6 +68,7 @@ public class FindAndBindTwin extends AbstractTwinWithModel implements Follower, 
                            InterestAPIGrpc.InterestAPIStub interestStub,
                            InterestAPIGrpc.InterestAPIBlockingStub interestBlockingStub,
                            SearchAPIGrpc.SearchAPIStub searchStub,
+                           MetaAPIGrpc.MetaAPIStub metaStub,
                            Executor executor,
                            TwinID modelDid,
                            Timer shareDataTimer,
@@ -76,6 +78,7 @@ public class FindAndBindTwin extends AbstractTwinWithModel implements Follower, 
         this.feedStub = feedStub;
         this.interestStub = interestStub;
         this.searchStub = searchStub;
+        this.metaStub = metaStub;
         this.interestBlockingStub = interestBlockingStub;
         this.followFutures = new ConcurrentHashMap<>();
         this.shareEveryMs = shareEvery.getSeconds() * 1000;
@@ -246,6 +249,11 @@ public class FindAndBindTwin extends AbstractTwinWithModel implements Follower, 
     @Override
     public SearchAPIGrpc.SearchAPIStub getSearchAPIStub() {
         return this.searchStub;
+    }
+
+    @Override
+    public MetaAPIGrpc.MetaAPIStub getMetaAPIStub() {
+        return this.metaStub;
     }
 
     public CompletableFuture<Void> findAndBind(SearchRequest.Payload searchRequestPayload, StreamObserver<FeedDatabag> streamObserver) {

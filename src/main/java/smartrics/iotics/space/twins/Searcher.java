@@ -1,14 +1,52 @@
 package smartrics.iotics.space.twins;
 
-import com.iotics.api.SearchAPIGrpc;
-import com.iotics.api.SearchRequest;
-import com.iotics.api.SearchResponse;
+import com.iotics.api.*;
 import io.grpc.stub.StreamObserver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import smartrics.iotics.space.Builders;
+import smartrics.iotics.space.grpc.AbstractLoggingStreamObserver;
 
 public interface Searcher extends Identifiable {
+    Logger LOGGER = LoggerFactory.getLogger(AbstractLoggingStreamObserver.class);
 
     SearchAPIGrpc.SearchAPIStub getSearchAPIStub();
+
+    MetaAPIGrpc.MetaAPIStub getMetaAPIStub();
+
+    default void query(SparqlQueryRequest.Payload payload, StreamObserver<String> result) {
+        SparqlQueryRequest request = SparqlQueryRequest.newBuilder()
+                .setHeaders(Builders.newHeadersBuilder(getAgentIdentity().did()).build())
+                .setPayload(payload)
+                .build();
+
+        NetChunks chunks = new NetChunks();
+        getMetaAPIStub().sparqlQuery(request, new StreamObserver<>() {
+            @Override
+            public void onNext(SparqlQueryResponse response) {
+                if (response.getPayload().hasStatus()) {
+                    // error in the search response
+                    result.onError(new SearchException("query operation failure", response.getPayload().getStatus()));
+                    return;
+                }
+                NetChunks.Result c = chunks.newChunk(response);
+                if (c.completed()) {
+                    result.onNext(c.value());
+                }
+                LOGGER.info("ALL COMPLETED {}", chunks.allCompleted());
+            }
+
+            @Override
+            public void onError(Throwable t) {
+                result.onError(t);
+            }
+
+            @Override
+            public void onCompleted() {
+                result.onCompleted();
+            }
+        });
+    }
 
     default void search(SearchRequest.Payload searchRequestPayload, StreamObserver<SearchResponse.TwinDetails> twinDetailsStreamObserver) {
 
