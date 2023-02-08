@@ -26,7 +26,7 @@ public abstract class AbstractTwin implements Identifiable, Maker {
 
     @Override
     public Identity getAgentIdentity() {
-        return ((SimpleIdentityManager) ioticsApi().getSim()).agentIdentity();
+        return ioticsApi().getSim().agentIdentity();
     }
 
     @Override
