@@ -53,9 +53,11 @@ public class FindAndBindTwin extends AbstractTwinWithModel implements Follower, 
     private final AtomicLong lastUpdateMs = new AtomicLong(-1);
     private final long shareEveryMs;
     private final RetryConf retryConf;
+    private final String label;
 
     public FindAndBindTwin(IoticsApi api,
                            String keyName,
+                           String label,
                            Executor executor,
                            TwinID modelDid,
                            Timer shareDataTimer,
@@ -66,6 +68,7 @@ public class FindAndBindTwin extends AbstractTwinWithModel implements Follower, 
         this.shareEveryMs = shareEvery.getSeconds() * 1000;
         this.gson = new Gson();
         this.retryConf = retryConf;
+        this.label = label;
         shareDataTimer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
@@ -162,12 +165,12 @@ public class FindAndBindTwin extends AbstractTwinWithModel implements Follower, 
                         .addProperties(Property.newBuilder()
                                 .setKey(ON_RDFS_COMMENT_PROP)
                                 .setLiteralValue(Literal.newBuilder()
-                                        .setValue("FindAndBindTwin: it follows feeds and makes them available for post processing")
+                                        .setValue("FindAndBindTwin ( " +this.label + "): it follows feeds and makes them available for post processing")
                                         .build())
                                 .build())
                         .addProperties(Property.newBuilder()
                                 .setKey(ON_RDFS_LABEL_PROP)
-                                .setLiteralValue(Literal.newBuilder().setValue("FindAndBindTwin").build())
+                                .setLiteralValue(Literal.newBuilder().setValue("FindAndBindTwin (" + this.label + ")").build())
                                 .build())
                         .addProperties(Property.newBuilder()
                                 .setKey(IOTICS_APP_MODEL_PROP)
@@ -186,7 +189,7 @@ public class FindAndBindTwin extends AbstractTwinWithModel implements Follower, 
                                 .setStoreLast(true)
                                 .addProperties(Property.newBuilder()
                                         .setKey(ON_RDFS_COMMENT_PROP)
-                                        .setLiteralValue(Literal.newBuilder().setValue("following data counters").build())
+                                        .setLiteralValue(Literal.newBuilder().setValue("Statistics for this twin").build())
                                         .build())
                                 .addProperties(Property.newBuilder()
                                         .setKey(ON_RDFS_LABEL_PROP)
