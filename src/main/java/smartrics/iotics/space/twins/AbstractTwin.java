@@ -12,10 +12,15 @@ public abstract class AbstractTwin implements Identifiable, Maker {
     private final Executor executor;
     private final IoticsApi api;
 
-    public AbstractTwin(IoticsApi api, String keyName,
-                        Executor executor) {
+    public AbstractTwin(IoticsApi api, String keyName, Executor executor) {
         this.api = api;
         this.identity = this.api.getSim().newTwinIdentity(keyName);
+        this.executor = executor;
+    }
+
+    public AbstractTwin(IoticsApi api, Identity identity, Executor executor) {
+        this.api = api;
+        this.identity = identity;
         this.executor = executor;
     }
 

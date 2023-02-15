@@ -12,8 +12,12 @@ import java.nio.charset.StandardCharsets;
 
 public interface Publisher extends Identifiable, ApiUser {
 
+    default ListenableFuture<ShareFeedDataResponse> share(ShareFeedDataRequest request) {
+        return ioticsApi().feedAPIFutureStub().shareFeedData(request);
+    }
+
     default ListenableFuture<ShareFeedDataResponse> share(FeedID feedID, String payload) {
-        return ioticsApi().feedAPIFutureStub().shareFeedData(ShareFeedDataRequest.newBuilder()
+        ShareFeedDataRequest request = ShareFeedDataRequest.newBuilder()
                 .setHeaders(Builders.newHeadersBuilder(getAgentIdentity().did()).build())
                 .setPayload(ShareFeedDataRequest.Payload.newBuilder()
                         .setSample(FeedData.newBuilder()
@@ -23,7 +27,8 @@ public interface Publisher extends Identifiable, ApiUser {
                 .setArgs(ShareFeedDataRequest.Arguments.newBuilder()
                         .setFeedId(feedID)
                         .build())
-                .build());
+                .build();
+        return share(request);
     }
 
 }

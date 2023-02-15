@@ -41,7 +41,7 @@ public class FindAndBindTwin extends AbstractTwinWithModel implements Follower, 
     public static final String ERRORS_COUNT = "errorsCount";
     public static final String TIMESTAMP = "timestamp";
     private static final Logger LOGGER = LoggerFactory.getLogger(FindAndBindTwin.class);
-    private static final DateTimeFormatter dtf = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ssX");
+    private static final DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX");
     private final Map<FeedID, CompletableFuture<Void>> followFutures;
 
     private final AtomicLong twinsFound = new AtomicLong(0);
@@ -54,6 +54,7 @@ public class FindAndBindTwin extends AbstractTwinWithModel implements Follower, 
     private final long shareEveryMs;
     private final RetryConf retryConf;
     private final String label;
+    private final String keyName;
 
     public FindAndBindTwin(IoticsApi api,
                            String keyName,
@@ -69,13 +70,14 @@ public class FindAndBindTwin extends AbstractTwinWithModel implements Follower, 
         this.gson = new Gson();
         this.retryConf = retryConf;
         this.label = label;
+        this.keyName = keyName;
         shareDataTimer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
                 try {
                     shareStatus();
                 } catch (Exception e) {
-                    LOGGER.warn("exception when sharing", e);
+                    LOGGER.warn("[{}][{}] exception when sharing", keyName, label, e);
                 }
             }
         }, 0, shareEveryMs);
@@ -91,7 +93,7 @@ public class FindAndBindTwin extends AbstractTwinWithModel implements Follower, 
         data.put(ERRORS_COUNT, errorsCount.get());
         data.put(TIMESTAMP, LocalDateTime.now().atOffset(ZoneOffset.UTC).format(dtf));
 
-        LOGGER.info("sharing counters data: {}", data);
+        LOGGER.info("[{}][{}] sharing counters data: {}", this.keyName, this.label, data);
         toCompletable(ioticsApi().feedAPIFutureStub().shareFeedData(ShareFeedDataRequest.newBuilder()
                 .setHeaders(Builders.newHeadersBuilder(getAgentIdentity().did()).build())
                 .setArgs(ShareFeedDataRequest.Arguments.newBuilder()
@@ -106,9 +108,7 @@ public class FindAndBindTwin extends AbstractTwinWithModel implements Follower, 
                                 .build())
                         .build())
                 .build()))
-                .thenAccept(shareFeedDataResponse -> {
-                    LOGGER.info("shared counters data: {}", data);
-                });
+                .thenAccept(shareFeedDataResponse -> LOGGER.info("[{}][{}] shared counters data: {}", keyName, label, data));
     }
 
     private boolean shouldShare() {
@@ -141,7 +141,8 @@ public class FindAndBindTwin extends AbstractTwinWithModel implements Follower, 
                                 .build())
                         .build())
                 .build()))
-                .thenAccept(upsertTwinResponse -> LOGGER.info("Update complete to store metadata with {}", content));
+                .thenAccept(upsertTwinResponse ->
+                        LOGGER.info("[{}][{}] Update complete to store metadata with {}", keyName, label, content));
     }
 
     public void updateMeta(SearchRequest.Payload searchRequestPayload) throws InvalidProtocolBufferException {
@@ -165,12 +166,14 @@ public class FindAndBindTwin extends AbstractTwinWithModel implements Follower, 
                         .addProperties(Property.newBuilder()
                                 .setKey(ON_RDFS_COMMENT_PROP)
                                 .setLiteralValue(Literal.newBuilder()
-                                        .setValue("FindAndBindTwin ( " +this.label + "): it follows feeds and makes them available for post processing")
+                                        .setValue("FindAndBindTwin [" +this.keyName + "][" +
+                                                this.label + "]: it follows feeds and makes them available for post processing")
                                         .build())
                                 .build())
                         .addProperties(Property.newBuilder()
                                 .setKey(ON_RDFS_LABEL_PROP)
-                                .setLiteralValue(Literal.newBuilder().setValue("FindAndBindTwin (" + this.label + ")").build())
+                                .setLiteralValue(Literal.newBuilder().setValue("FindAndBindTwin [" +
+                                        this.keyName + "][" +this.label+ "]").build())
                                 .build())
                         .addProperties(Property.newBuilder()
                                 .setKey(IOTICS_APP_MODEL_PROP)
@@ -242,7 +245,8 @@ public class FindAndBindTwin extends AbstractTwinWithModel implements Follower, 
                     FindAndBindTwin.this.lastUpdateMs.set(System.currentTimeMillis());
                     for (SearchResponse.FeedDetails feedDetails : twinDetails.getFeedsList()) {
                         FeedID feedID = feedDetails.getFeedId();
-                        LOGGER.debug("about to follow {}/{} in host {}", feedID.getTwinId(), feedID.getId(), feedID.getHostId());
+                        LOGGER.debug("[{}][{}] about to follow {}/{} in host {}", keyName, label,
+                                feedID.getTwinId(), feedID.getId(), feedID.getHostId());
                         follow(feedID, FindAndBindTwin.this.retryConf, new StreamObserver<>() {
                             @Override
                             public void onNext(FetchInterestResponse value) {
@@ -251,7 +255,7 @@ public class FindAndBindTwin extends AbstractTwinWithModel implements Follower, 
                                     FindAndBindTwin.this.lastUpdateMs.set(System.currentTimeMillis());
                                     feedDataStreamObserver.onNext(new FeedDatabag(twinData, feedDetails, value));
                                 } catch (RuntimeException e) {
-                                    LOGGER.debug("exception processing next feed data", e);
+                                    LOGGER.debug("[{}][{}] exception processing next feed data", keyName, label, e);
                                     throw e;
                                 }
                             }
@@ -277,7 +281,7 @@ public class FindAndBindTwin extends AbstractTwinWithModel implements Follower, 
                     }
 
                 } catch (RuntimeException e) {
-                    LOGGER.debug("exception processing next search response", e);
+                    LOGGER.debug("[{}][{}] exception processing next search response", keyName, label, e);
                     throw e;
                 }
             }

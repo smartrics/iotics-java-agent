@@ -1,6 +1,7 @@
 package smartrics.iotics.space.twins;
 
 import com.iotics.api.TwinID;
+import com.iotics.sdk.identity.Identity;
 import smartrics.iotics.space.grpc.IoticsApi;
 
 import java.util.concurrent.Executor;
@@ -13,6 +14,13 @@ public abstract class AbstractTwinWithModel extends AbstractTwin {
                                  Executor executor,
                                  TwinID modelDid) {
         super(api, keyName, executor);
+        this.modelDid = modelDid;
+    }
+
+    public AbstractTwinWithModel(IoticsApi api, Identity identity,
+                                 Executor executor,
+                                 TwinID modelDid) {
+        super(api, identity, executor);
         this.modelDid = modelDid;
     }
 
