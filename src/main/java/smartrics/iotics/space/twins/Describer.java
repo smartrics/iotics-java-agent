@@ -15,11 +15,12 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public interface Describer extends Identifiable, ApiUser {
-    default void describe(Timer scheduler, Duration initialDelay, Duration pollingFrequency, StreamObserver<DescribeTwinResponse> result) {
+
+    default void describe(TwinID twinID, Timer scheduler, Duration initialDelay, Duration pollingFrequency, StreamObserver<DescribeTwinResponse> result) {
         scheduler.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                ListenableFuture<DescribeTwinResponse> f = describe();
+                ListenableFuture<DescribeTwinResponse> f = describe(twinID);
                 Futures.addCallback(f, new FutureCallback<>() {
                     @Override
                     public void onSuccess(DescribeTwinResponse describeTwinResponse) {
@@ -33,18 +34,23 @@ public interface Describer extends Identifiable, ApiUser {
                 }, MoreExecutors.directExecutor());
             }
         }, initialDelay.toMillis(), pollingFrequency.toMillis());
+
     }
 
     default ListenableFuture<DescribeTwinResponse> describe() {
+        return describe(TwinID.newBuilder().setId(getIdentity().did()).build());
+    }
+
+    default ListenableFuture<DescribeTwinResponse> describe(TwinID twinID) {
         return ioticsApi().twinAPIFutureStub().describeTwin(DescribeTwinRequest.newBuilder()
                 .setHeaders(Builders.newHeadersBuilder(getAgentIdentity().did())
                         .build())
                 .setArgs(DescribeTwinRequest.Arguments.newBuilder()
                         .setTwinId(TwinID.newBuilder()
-                                .setId(getIdentity().did())
+                                .setId(twinID.getId())
+                                .setHostId(twinID.getHostId())
                                 .build())
                         .build())
                 .build());
     }
-
 }
