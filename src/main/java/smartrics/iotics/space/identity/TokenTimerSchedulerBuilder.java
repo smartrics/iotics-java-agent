@@ -1,6 +1,6 @@
 package smartrics.iotics.space.identity;
 
-import com.iotics.sdk.identity.IdentityManager;
+import smartrics.iotics.identity.IdentityManager;
 
 import java.time.Duration;
 import java.util.Timer;

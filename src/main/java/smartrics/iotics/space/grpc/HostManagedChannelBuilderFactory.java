@@ -1,6 +1,6 @@
 package smartrics.iotics.space.grpc;
 
-import com.iotics.sdk.identity.SimpleIdentityManager;
+import smartrics.iotics.identity.SimpleIdentityManager;
 import io.grpc.ClientInterceptor;
 import io.grpc.ManagedChannelBuilder;
 import smartrics.iotics.space.identity.TokenScheduler;

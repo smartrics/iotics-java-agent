@@ -93,7 +93,7 @@
             <!-- requires manual installation of the identity sdk and the .so in src/main/resources -->
             <groupId>smartrics.iotics</groupId>
             <artifactId>iotics-identity-java</artifactId>
-            <version>0.1</version>
+            <version>0.2-SNAPSHOT</version>
         </dependency>
 
         <!-- TEST -->

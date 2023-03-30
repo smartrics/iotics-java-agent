@@ -1,6 +1,6 @@
 package smartrics.iotics.space.twins;
 
-import com.iotics.sdk.identity.Identity;
+import smartrics.iotics.identity.Identity;
 
 public interface Identifiable {
     Identity getIdentity();

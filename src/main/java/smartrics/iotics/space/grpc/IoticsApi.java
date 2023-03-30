@@ -2,9 +2,9 @@ package smartrics.iotics.space.grpc;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.iotics.api.*;
-import com.iotics.sdk.identity.IdentityManager;
-import com.iotics.sdk.identity.SimpleConfig;
-import com.iotics.sdk.identity.SimpleIdentityManager;
+import smartrics.iotics.identity.IdentityManager;
+import smartrics.iotics.identity.SimpleConfig;
+import smartrics.iotics.identity.SimpleIdentityManager;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import smartrics.iotics.space.IoticSpace;

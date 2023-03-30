@@ -1,7 +1,7 @@
 package smartrics.iotics.space.twins;
 
 import com.iotics.api.TwinID;
-import com.iotics.sdk.identity.Identity;
+import smartrics.iotics.identity.Identity;
 import smartrics.iotics.space.grpc.IoticsApi;
 
 import java.util.concurrent.Executor;
