@@ -12,20 +12,24 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 
 public class PrefixGenerator {
 
     private static final String RES_NAME = "prefixes.cc.json";
 
-    private final Map<String, String> prefixes;
+    private final Map<String, String> prefixes = new HashMap<>();
 
     public PrefixGenerator() {
         InputStream res = PrefixGenerator.class.getClassLoader().getResourceAsStream(RES_NAME);
         if (res == null) {
             throw new IllegalArgumentException("prefixes file not found at " + RES_NAME);
         }
-        prefixes = new Gson().fromJson(new InputStreamReader(res), Map.class);
+        Gson gson = new Gson();
+        Map<?, ?> pf = gson.fromJson(new InputStreamReader(res), Map.class);
+        pf.keySet().forEach((Consumer<Object>) o -> prefixes.put(o.toString(), pf.get(o).toString()));
     }
 
     public static final String DEF_PREFIX = "def";
@@ -107,12 +111,11 @@ public class PrefixGenerator {
 
 
     private String findPrefix(String uriString, String def) {
-        String pref = prefixes.entrySet()
+        return prefixes.entrySet()
                 .stream()
                 .filter(entry -> uriString.contains(entry.getValue()))
                 .map(e -> uriString.replace(e.getValue(), e.getKey()))
                 .findFirst()
                 .orElse(def);
-        return pref;
     }
 }
