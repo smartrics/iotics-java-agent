@@ -6,7 +6,7 @@
 
     <groupId>smartrics.iotics</groupId>
     <artifactId>iotics-java-agent</artifactId>
-    <version>1.1-SNAPSHOT</version>
+    <version>0.1-SNAPSHOT</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -17,7 +17,7 @@
         <protobuf-java.version>4.0.0-rc-2</protobuf-java.version>
         <tomcat-annotation-api.version>6.0.53</tomcat-annotation-api.version>
         <protoc.version>3.21.7</protoc.version>
-        <grpc-protobuf.version>1.51.0</grpc-protobuf.version>
+        <grpc-protobuf.version>1.51.1</grpc-protobuf.version>
         <os-maven.version>1.6.2</os-maven.version>
         <protobuf-maven-plugin.version>0.6.1</protobuf-maven-plugin.version>
         <slf4j.version>1.7.32</slf4j.version>
@@ -40,6 +40,19 @@
         <developerConnection>scm:git:ssh://github.com:smartrics/iotics-java-agent.git</developerConnection>
         <url>https://github.com/smartrics/iotics-java-agent/tree/main</url>
     </scm>
+
+    <distributionManagement>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+        <repository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+    </distributionManagement>
+
+
     <dependencies>
         <!-- https://github.com/grpc/grpc-java -->
         <dependency> <!-- necessary for Java 9+ -->
@@ -59,6 +72,12 @@
             <version>${grpc-protobuf.version}</version>
         </dependency>
         <dependency>
+            <!-- overrides transitive dep of grpc-netty that in turn has a CEV on 4.1.79.Final -->
+            <groupId>io.netty</groupId>
+            <artifactId>netty-codec</artifactId>
+            <version>4.1.90.Final</version>
+        </dependency>
+        <dependency>
             <groupId>io.grpc</groupId>
             <artifactId>grpc-stub</artifactId>
             <version>${grpc-protobuf.version}</version>
@@ -72,9 +91,9 @@
         <!-- IOTICS -->
         <dependency>
             <!-- requires manual installation of the identity sdk and the .so in src/main/resources -->
-            <groupId>com.iotics.sdk.identity</groupId>
-            <artifactId>java-idsdk</artifactId>
-            <version>1.1-SNAPSHOT</version>
+            <groupId>smartrics.iotics</groupId>
+            <artifactId>iotics-identity-java</artifactId>
+            <version>0.1</version>
         </dependency>
 
         <!-- TEST -->
@@ -165,4 +184,92 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>1.5</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <version>3.2.1</version>
+                        <executions>
+                            <execution>
+                                <id>attach-sources</id>
+                                <goals>
+                                    <goal>jar-no-fork</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>3.2.0</version>
+                        <executions>
+                            <execution>
+                                <id>attach-javadocs</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.sonatype.plugins</groupId>
+                        <artifactId>nexus-staging-maven-plugin</artifactId>
+                        <version>1.6.13</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <serverId>ossrh</serverId>
+                            <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                            <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>1.6</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                                <configuration>
+                                    <!-- Prevent gpg from using pinentry programs. Fixes: gpg: signing
+                                        failed: Inappropriate ioctl for device -->
+                                    <configuration>
+                                        <keyname>${gpg.keyname}</keyname>
+                                        <passphraseServerId>${gpg.keyname}</passphraseServerId>
+                                    </configuration>
+                                    <gpgArguments>
+                                        <arg>--pinentry-mode</arg>
+                                        <arg>loopback</arg>
+                                    </gpgArguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
 </project>
