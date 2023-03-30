@@ -30,6 +30,8 @@ class IoticSpaceTest {
 
 
     private HostEndpoints newEndpoints() {
-        return new HostEndpoints("resolver", "stomp", "qapi", "grpc", "grpcWeb", "version");
+        return new HostEndpoints("resolver", "stomp", "qapi", "grpc", "grpcWeb", new HostEndpointVersion(
+                "1", "2", "3", "4", "5"
+        ));
     }
 }
