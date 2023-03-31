@@ -16,3 +16,9 @@ mvn package
 ```
 
 If used in other projects run `mvn install` to install it in your own local repository
+
+To deploy:
+
+```shell
+mvn clean deploy -Prelease
+```
