@@ -8,6 +8,11 @@
     <artifactId>iotics-java-agent</artifactId>
     <version>0.0.1</version>
 
+    <name>${project.groupId}:${project.artifactId}</name>
+    <url>https://github.com/smartrics/iotics-java-agent</url>
+    <description>IOTICS Java agent library</description>
+
+
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
