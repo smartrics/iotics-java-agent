@@ -21,8 +21,8 @@
         <maven.compiler.target>17</maven.compiler.target>
         <protobuf-java.version>4.0.0-rc-2</protobuf-java.version>
         <tomcat-annotation-api.version>6.0.53</tomcat-annotation-api.version>
-        <protoc.version>3.21.7</protoc.version>
-        <grpc-protobuf.version>1.51.1</grpc-protobuf.version>
+        <protoc.version>3.25.2</protoc.version>
+        <grpc-protobuf.version>1.61.1</grpc-protobuf.version>
         <os-maven.version>1.6.2</os-maven.version>
         <protobuf-maven-plugin.version>0.6.1</protobuf-maven-plugin.version>
         <slf4j.version>1.7.32</slf4j.version>
@@ -90,7 +90,7 @@
         <dependency>
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-java-util</artifactId>
-            <version>3.21.12</version>
+            <version>3.25.2</version>
         </dependency>
 
         <!-- IOTICS -->
@@ -136,13 +136,20 @@
         <dependency>
             <groupId>com.squareup.okhttp3</groupId>
             <artifactId>okhttp</artifactId>
-            <version>4.9.0</version>
+            <version>4.12.0</version>
         </dependency>
         <dependency>
             <groupId>org.bitcoinj</groupId>
             <artifactId>bitcoinj-core</artifactId>
             <version>0.16.1</version>
         </dependency>
+        <dependency>
+            <!-- needed to remove the CEV from org.bitcoinj:s:0.16.1 -->
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk15to18</artifactId>
+            <version>1.77</version>
+        </dependency>
+
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
@@ -156,7 +163,7 @@
         <dependency>
             <groupId>com.jayway.jsonpath</groupId>
             <artifactId>json-path</artifactId>
-            <version>2.7.0</version>
+            <version>2.9.0</version>
         </dependency>
 
     </dependencies>
@@ -198,7 +205,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
-                        <version>1.5</version>
+                        <version>3.1.0</version>
                         <executions>
                             <execution>
                                 <id>sign-artifacts</id>
@@ -249,7 +256,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
-                        <version>1.6</version>
+                        <version>3.1.0</version>
                         <executions>
                             <execution>
                                 <id>sign-artifacts</id>

@@ -24,7 +24,7 @@ public class TokenTimerScheduler implements TokenScheduler {
     @Override
     public void schedule() {
         if (timer == null) {
-            return;
+            throw new IllegalStateException("null timer");
         }
         this.timer.schedule(new TimerTask() {
             @Override
