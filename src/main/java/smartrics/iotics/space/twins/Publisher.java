@@ -27,7 +27,7 @@ public interface Publisher extends Identifiable, ApiUser {
     }
 
     @NotNull
-    private ShareFeedDataRequest newRequest(FeedID feedID, String payload) {
+    default ShareFeedDataRequest newRequest(FeedID feedID, String payload) {
         return ShareFeedDataRequest.newBuilder()
                 .setHeaders(Builders.newHeadersBuilder(getAgentIdentity().did()).build())
                 .setPayload(ShareFeedDataRequest.Payload.newBuilder()
