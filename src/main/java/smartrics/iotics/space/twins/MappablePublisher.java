@@ -13,14 +13,19 @@ public interface MappablePublisher<T> extends Publisher, Mappable<T> {
     default CompletableFuture<Void> share() {
         List<ShareFeedDataRequest> list = getMapper().getShareFeedDataRequest(getTwinSource());
 
+        Function<ShareFeedDataRequest, ListenableFuture<?>> function = request ->
+                ioticsApi().feedAPIFutureStub().shareFeedData(request);
+
+        return map(list, function);
+    }
+
+    private CompletableFuture<Void> map(List<ShareFeedDataRequest> list, Function<ShareFeedDataRequest, ListenableFuture<?>> function) {
         List<CompletableFuture<?>> futures = list.stream()
-                .map((Function<ShareFeedDataRequest, ListenableFuture<?>>) request ->
-                        ioticsApi().feedAPIFutureStub().shareFeedData(request))
+                .map(function)
                 .map((Function<ListenableFuture<?>, CompletableFuture<?>>) ListenableFutureAdapter::toCompletable)
                 .toList();
 
         return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
+
     }
-
-
 }

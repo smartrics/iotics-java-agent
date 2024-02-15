@@ -110,8 +110,7 @@ public class JsonPathMapper implements Mapper<DocumentContext> {
                 .stream()
                 .map(s -> ((JsonPrimitive) jsonContext.read(s)).getAsString())
                 .collect(Collectors.joining("|")).hashCode();
-        Identity twinIdentity = api.getSim().newTwinIdentity("key_" + twinId);
-        return twinIdentity;
+        return api.getSim().newTwinIdentity("key_" + twinId);
     }
 
     @Override
