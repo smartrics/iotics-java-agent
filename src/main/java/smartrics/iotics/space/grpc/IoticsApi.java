@@ -17,6 +17,7 @@ import java.util.concurrent.TimeUnit;
 public class IoticsApi {
     private final TwinAPIGrpc.TwinAPIFutureStub twinAPIFutureStub;
     private final FeedAPIGrpc.FeedAPIFutureStub feedAPIFutureStub;
+    private final FeedAPIGrpc.FeedAPIStub feedAPIStub;
     private final InputAPIGrpc.InputAPIFutureStub inputAPIFutureStub;
     private final InterestAPIGrpc.InterestAPIStub interestAPIStub;
     private final InterestAPIGrpc.InterestAPIBlockingStub interestAPIBlockingStub;
@@ -52,6 +53,7 @@ public class IoticsApi {
 
         this.twinAPIFutureStub = TwinAPIGrpc.newFutureStub(channel);
         this.feedAPIFutureStub = FeedAPIGrpc.newFutureStub(channel);
+        this.feedAPIStub = FeedAPIGrpc.newStub(channel);
         this.inputAPIFutureStub = InputAPIGrpc.newFutureStub(channel);
         this.metaAPIStub = MetaAPIGrpc.newStub(channel);
         this.interestAPIStub = InterestAPIGrpc.newStub(channel);
@@ -77,6 +79,10 @@ public class IoticsApi {
 
     public FeedAPIGrpc.FeedAPIFutureStub feedAPIFutureStub() {
         return feedAPIFutureStub;
+    }
+
+    public FeedAPIGrpc.FeedAPIStub feedAPIStub() {
+        return feedAPIStub;
     }
 
     public InputAPIGrpc.InputAPIFutureStub inputAPIFutureStub() {
