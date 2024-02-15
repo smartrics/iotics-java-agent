@@ -151,7 +151,6 @@ public abstract class FindAndDoTwin extends AbstractTwinWithModel implements Pub
                 .setHeaders(Builders.newHeadersBuilder(getAgentIdentity().did()).build())
                 .setPayload(UpsertTwinRequest.Payload.newBuilder()
                         .setTwinId(TwinID.newBuilder().setId(getIdentity().did()).build())
-                        .setVisibility(Visibility.PRIVATE)
                         .addProperties(Property.newBuilder()
                                 .setKey(ON_RDFS_COMMENT_PROP)
                                 .setLiteralValue(Literal.newBuilder()

@@ -123,7 +123,6 @@ public class JsonPathMapper implements Mapper<DocumentContext> {
                 .setHeaders(Builders.newHeadersBuilder(api.getSim().agentIdentity().did()));
         UpsertTwinRequest.Payload.Builder payloadBuilder = UpsertTwinRequest.Payload.newBuilder();
         payloadBuilder.setTwinId(TwinID.newBuilder().setId(id.did()));
-        payloadBuilder.setVisibility(Visibility.PUBLIC);
         payloadBuilder.addProperties(Property.newBuilder()
                 .setKey(IOTICS_PUBLIC_ALLOW_LIST_PROP)
                 .setUriValue(Uri.newBuilder().setValue(IOTICS_PUBLIC_ALLOW_ALL_VALUE).build())

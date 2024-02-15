@@ -6,7 +6,7 @@
 
     <groupId>smartrics.iotics</groupId>
     <artifactId>iotics-java-agent</artifactId>
-    <version>0.0.2-SNAPSHOT</version>
+    <version>0.0.3-SNAPSHOT</version>
 
     <name>${project.groupId}:${project.artifactId}</name>
     <url>https://github.com/smartrics/iotics-java-agent</url>
