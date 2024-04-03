@@ -10,6 +10,11 @@ import org.slf4j.LoggerFactory;
 import smartrics.iotics.space.Builders;
 import smartrics.iotics.space.grpc.AbstractLoggingStreamObserver;
 
+import java.util.Comparator;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
+
 public interface Searcher extends Identifiable, ApiUser {
     Logger LOGGER = LoggerFactory.getLogger(AbstractLoggingStreamObserver.class);
 
@@ -19,7 +24,7 @@ public interface Searcher extends Identifiable, ApiUser {
                 .setPayload(payload)
                 .build();
 
-        NetChunks chunks = new NetChunks();
+        List<SparqlQueryResponse.Payload> queue = new CopyOnWriteArrayList<>();
         ioticsApi().metaAPIStub().sparqlQuery(request, new StreamObserver<>() {
             @Override
             public void onNext(SparqlQueryResponse response) {
@@ -28,11 +33,15 @@ public interface Searcher extends Identifiable, ApiUser {
                     result.onError(new SearchException("query operation failure", response.getPayload().getStatus()));
                     return;
                 }
-                NetChunks.Result c = chunks.newChunk(response);
-                if (c.completed()) {
-                    result.onNext(c.value());
+                queue.add(response.getPayload());
+                if (response.getPayload().getLast()) {
+                    queue.sort(Comparator.comparingLong(SparqlQueryResponse.Payload::getSeqNum));
+                    String fullString = queue.stream()
+                            .map(payload1 -> payload1.getResultChunk().toStringUtf8())
+                            .collect(Collectors.joining());
+                    result.onNext(fullString);
                 }
-                LOGGER.info("ALL COMPLETED {}", chunks.allCompleted());
+                LOGGER.debug("ALL COMPLETED {}", response.getPayload().getLast());
             }
 
             @Override
