@@ -2,11 +2,11 @@ package smartrics.iotics.space.grpc;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.iotics.api.*;
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
 import smartrics.iotics.identity.IdentityManager;
 import smartrics.iotics.identity.SimpleConfig;
 import smartrics.iotics.identity.SimpleIdentityManager;
-import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
 import smartrics.iotics.space.IoticSpace;
 
 import java.time.Duration;
@@ -15,6 +15,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 public class IoticsApi {
+    protected final SimpleIdentityManager sim;
+    protected final ManagedChannel channel;
     private final TwinAPIGrpc.TwinAPIFutureStub twinAPIFutureStub;
     private final FeedAPIGrpc.FeedAPIFutureStub feedAPIFutureStub;
     private final FeedAPIGrpc.FeedAPIStub feedAPIStub;
@@ -23,15 +25,13 @@ public class IoticsApi {
     private final InterestAPIGrpc.InterestAPIBlockingStub interestAPIBlockingStub;
     private final SearchAPIGrpc.SearchAPIStub searchAPIStub;
     private final MetaAPIGrpc.MetaAPIStub metaAPIStub;
-    protected final SimpleIdentityManager sim;
-    protected final ManagedChannel channel;
     private final Timer timer;
 
     public IoticsApi(IoticSpace ioticSpace, SimpleConfig userConf, SimpleConfig agentConf, Duration tokenValidityDuration) {
         sim = SimpleIdentityManager.Builder
                 .anIdentityManager()
-                .withAgentKeyID("#test-agent-0")
-                .withUserKeyID("#test-user-0")
+                .withAgentKeyID(agentConf.keyId())
+                .withUserKeyID(userConf.keyId())
                 .withAgentKeyName(agentConf.keyName())
                 .withUserKeyName(userConf.keyName())
                 .withResolverAddress(ioticSpace.endpoints().resolver())

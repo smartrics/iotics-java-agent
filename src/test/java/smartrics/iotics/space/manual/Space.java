@@ -40,8 +40,8 @@ public class Space {
 
         sim = SimpleIdentityManager.Builder
                 .anIdentityManager()
-                .withAgentKeyID("#test-agent-0")
-                .withUserKeyID("#test-user-0")
+                .withAgentKeyID("#agent-" + agent.keyName().hashCode())
+                .withUserKeyID("#user-" + user.keyName().hashCode())
                 .withAgentKeyName(agent.keyName())
                 .withUserKeyName(user.keyName())
                 .withResolverAddress(ioticSpace.endpoints().resolver())
@@ -55,7 +55,7 @@ public class Space {
     }
 
     public ManagedChannel hostManagedChannel() throws IOException {
-        ManagedChannelBuilder channelBuilder = new HostManagedChannelBuilderFactory()
+        var channelBuilder = new HostManagedChannelBuilderFactory()
                 .withSimpleIdentityManager(sim)
                 .withSGrpcEndpoint(ioticSpace.endpoints().grpc())
                 .withTokenTokenDuration(Duration.ofSeconds(10))
