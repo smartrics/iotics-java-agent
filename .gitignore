@@ -28,3 +28,5 @@ tmp/
 .idea/
 *.iml
 src/main/proto/iotics
+/src/test/resources/test-agent.json
+/src/test/resources/test-user.json

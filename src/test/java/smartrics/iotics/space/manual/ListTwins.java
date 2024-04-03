@@ -10,6 +10,7 @@ import io.grpc.ManagedChannel;
 import smartrics.iotics.space.Builders;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 public class ListTwins {
     public static void main(String[] args) throws Exception {
@@ -35,6 +36,10 @@ public class ListTwins {
             e.printStackTrace();
         }
         completed.await();
+        System.out.println("finishing");
+        channel.shutdownNow();
+        channel.awaitTermination(5, TimeUnit.SECONDS);
+        System.out.println("terminated");
     }
 
 }

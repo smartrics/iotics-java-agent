@@ -26,6 +26,7 @@ public class HttpServiceRegistry implements ServiceRegistry {
 
         try (Response response = this.httpClient.newCall(request).execute()) {
             Gson gson = new Gson();
+            assert response.body() != null;
             return gson.fromJson(response.body().string(), HostEndpoints.class);
         }
     }

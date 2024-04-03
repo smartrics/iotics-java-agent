@@ -8,6 +8,8 @@ import smartrics.iotics.identity.SimpleIdentityManager;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import org.bitcoinj.core.Base58;
+import smartrics.iotics.identity.jna.JnaSdkApiInitialiser;
+import smartrics.iotics.identity.jna.SdkApi;
 import smartrics.iotics.space.HttpServiceRegistry;
 import smartrics.iotics.space.IoticSpace;
 import smartrics.iotics.space.grpc.HostManagedChannelBuilderFactory;
@@ -19,6 +21,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
+import java.util.Timer;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class Space {
@@ -29,9 +32,11 @@ public class Space {
 
     public Space(String dns) throws IOException {
         this.dns = dns;
-        String base = "./src/test/resources/";
-        SimpleConfig user = SimpleConfig.readConf(Paths.get(base,"test-user.json"));
-        SimpleConfig agent = SimpleConfig.readConf(Paths.get(base,"test-agent.json"));
+
+        String seed = "956c0741e3d8cdfbb43bf00570578768867b2f2cb14f059d367cf9fbfc4b1bc2";
+
+        SimpleConfig user = new SimpleConfig(seed, "demoUserKey", "#id-0987654");
+        SimpleConfig agent = new SimpleConfig(seed, "demoAgentKey", "#id-1234567");
 
         HttpServiceRegistry sr = new HttpServiceRegistry(this.dns);
 
@@ -40,11 +45,11 @@ public class Space {
 
         sim = SimpleIdentityManager.Builder
                 .anIdentityManager()
-                .withAgentKeyID("#agent-" + agent.keyName().hashCode())
-                .withUserKeyID("#user-" + user.keyName().hashCode())
+                .withResolverAddress(ioticSpace.endpoints().resolver())
+                .withAgentKeyID(agent.keyId())
+                .withUserKeyID(user.keyId())
                 .withAgentKeyName(agent.keyName())
                 .withUserKeyName(user.keyName())
-                .withResolverAddress(ioticSpace.endpoints().resolver())
                 .withUserSeed(user.seed())
                 .withAgentSeed(agent.seed())
                 .build();
@@ -57,10 +62,10 @@ public class Space {
     public ManagedChannel hostManagedChannel() throws IOException {
         var channelBuilder = new HostManagedChannelBuilderFactory()
                 .withSimpleIdentityManager(sim)
+                .withTimer(new Timer())
                 .withSGrpcEndpoint(ioticSpace.endpoints().grpc())
                 .withTokenTokenDuration(Duration.ofSeconds(10))
                 .makeManagedChannelBuilder();
         return channelBuilder.keepAliveWithoutCalls(true).build();
     }
-
 }
