@@ -14,7 +14,7 @@ public abstract class AbstractTwin implements Identifiable, Maker {
 
     public AbstractTwin(IoticsApi api, String keyName, Executor executor) {
         this.api = api;
-        this.identity = this.api.getSim().newTwinIdentity(keyName);
+        this.identity = this.api.getSim().newTwinIdentity(keyName, "#deleg-" + keyName.hashCode());
         this.executor = executor;
     }
 
