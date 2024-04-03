@@ -1,8 +1,8 @@
 package smartrics.iotics.space.grpc;
 
-import smartrics.iotics.identity.SimpleIdentityManager;
 import io.grpc.ClientInterceptor;
 import io.grpc.ManagedChannelBuilder;
+import smartrics.iotics.identity.SimpleIdentityManager;
 import smartrics.iotics.space.identity.TokenScheduler;
 import smartrics.iotics.space.identity.TokenTimerSchedulerBuilder;
 
@@ -44,8 +44,8 @@ public class HostManagedChannelBuilderFactory {
         return this;
     }
 
-    public ManagedChannelBuilder makeManagedChannelBuilder() {
-        ManagedChannelBuilder builder = ManagedChannelBuilder.forTarget(grpcEndpoint);
+    public ManagedChannelBuilder<?> makeManagedChannelBuilder() {
+        var builder = ManagedChannelBuilder.forTarget(grpcEndpoint);
 
         TokenScheduler scheduler = TokenTimerSchedulerBuilder
                 .aTokenTimerScheduler()

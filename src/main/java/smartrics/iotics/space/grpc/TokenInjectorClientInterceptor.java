@@ -13,7 +13,7 @@ public record TokenInjectorClientInterceptor(
     }
 
     public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(MethodDescriptor<ReqT, RespT> method, CallOptions callOptions, Channel next) {
-        return new HeaderAttachingClientCall(next.newCall(method, callOptions));
+        return new HeaderAttachingClientCall<>(next.newCall(method, callOptions));
     }
 
     private final class HeaderAttachingClientCall<ReqT, RespT> extends ForwardingClientCall.SimpleForwardingClientCall<ReqT, RespT> {
