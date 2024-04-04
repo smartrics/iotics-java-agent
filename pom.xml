@@ -18,12 +18,15 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
-        <protobuf-java.version>4.0.0-rc-2</protobuf-java.version>
-        <tomcat-annotation-api.version>6.0.53</tomcat-annotation-api.version>
-        <protoc.version>3.21.12</protoc.version>
-        <grpc-protobuf.version>1.51.1</grpc-protobuf.version>
-        <os-maven.version>1.6.2</os-maven.version>
+
+        <!-- version 4.x seems not working -->
+<!--        <protobuf-java.version>3.21.7</protobuf-java.version>-->
+        <protoc.version>3.25.3</protoc.version>
+        <io-grpc.version>1.62.2</io-grpc.version>
         <protobuf-maven-plugin.version>0.6.1</protobuf-maven-plugin.version>
+
+        <os-maven.version>1.6.2</os-maven.version>
+        <tomcat-annotation-api.version>6.0.53</tomcat-annotation-api.version>
         <slf4j.version>1.7.32</slf4j.version>
     </properties>
     <licenses>
@@ -68,28 +71,35 @@
         <dependency>
             <groupId>io.grpc</groupId>
             <artifactId>grpc-protobuf</artifactId>
-            <version>${grpc-protobuf.version}</version>
+            <version>${io-grpc.version}</version>
         </dependency>
         <dependency>
             <groupId>io.grpc</groupId>
             <artifactId>grpc-netty</artifactId>
-            <version>${grpc-protobuf.version}</version>
-        </dependency>
-        <dependency>
-            <!-- overrides transitive dep of grpc-netty that in turn has a CEV on 4.1.79.Final -->
-            <groupId>io.netty</groupId>
-            <artifactId>netty-codec</artifactId>
-            <version>4.1.90.Final</version>
+            <version>${io-grpc.version}</version>
         </dependency>
         <dependency>
             <groupId>io.grpc</groupId>
             <artifactId>grpc-stub</artifactId>
-            <version>${grpc-protobuf.version}</version>
+            <version>${io-grpc.version}</version>
         </dependency>
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-netty-shaded</artifactId>
+            <scope>runtime</scope>
+            <version>${io-grpc.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-testing</artifactId>
+            <version>${io-grpc.version}</version>
+            <scope>test</scope>
+        </dependency>
+
         <dependency>
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-java-util</artifactId>
-            <version>3.25.2</version>
+            <version>${protoc.version}</version>
         </dependency>
 
         <!-- IOTICS -->
@@ -182,7 +192,7 @@
                 <configuration>
                     <protocArtifact>com.google.protobuf:protoc:${protoc.version}:exe:${os.detected.classifier}</protocArtifact>
                     <pluginId>grpc-java</pluginId>
-                    <pluginArtifact>io.grpc:protoc-gen-grpc-java:${grpc-protobuf.version}:exe:${os.detected.classifier}</pluginArtifact>
+                    <pluginArtifact>io.grpc:protoc-gen-grpc-java:${io-grpc.version}:exe:${os.detected.classifier}</pluginArtifact>
                 </configuration>
                 <executions>
                     <execution>
