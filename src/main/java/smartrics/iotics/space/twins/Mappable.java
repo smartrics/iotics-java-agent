@@ -1,9 +1,7 @@
 package smartrics.iotics.space.twins;
 
-public interface Mappable<T> {
+public interface Mappable {
 
-    Mapper<T> getMapper();
-
-    T getTwinSource();
+    Mapper getMapper();
 
 }

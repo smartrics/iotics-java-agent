@@ -6,11 +6,11 @@ import smartrics.iotics.identity.Identity;
 
 import java.util.List;
 
-public interface Mapper<T> {
+public interface Mapper {
 
-    Identity getTwinIdentity(T input);
+    Identity getTwinIdentity();
 
-    UpsertTwinRequest getUpsertTwinRequest(T input);
+    UpsertTwinRequest getUpsertTwinRequest();
 
-    List<ShareFeedDataRequest> getShareFeedDataRequest(T input);
+    List<ShareFeedDataRequest> getShareFeedDataRequest();
 }

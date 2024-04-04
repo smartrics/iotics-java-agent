@@ -8,10 +8,10 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
-public interface MappablePublisher<T> extends Publisher, Mappable<T> {
+public interface MappablePublisher extends Publisher, Mappable {
 
     default CompletableFuture<Void> share() {
-        List<ShareFeedDataRequest> list = getMapper().getShareFeedDataRequest(getTwinSource());
+        List<ShareFeedDataRequest> list = getMapper().getShareFeedDataRequest();
 
         Function<ShareFeedDataRequest, ListenableFuture<?>> function = request ->
                 ioticsApi().feedAPIFutureStub().shareFeedData(request);

@@ -4,10 +4,10 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.iotics.api.UpsertTwinRequest;
 import com.iotics.api.UpsertTwinResponse;
 
-public interface MappableMaker<T> extends Maker, Mappable<T> {
+public interface MappableMaker extends Maker, Mappable {
 
     default ListenableFuture<UpsertTwinResponse> make() {
-        UpsertTwinRequest upsertRequest = getMapper().getUpsertTwinRequest(getTwinSource());
+        UpsertTwinRequest upsertRequest = getMapper().getUpsertTwinRequest();
         return ioticsApi().twinAPIFutureStub().upsertTwin(upsertRequest);
     }
 
