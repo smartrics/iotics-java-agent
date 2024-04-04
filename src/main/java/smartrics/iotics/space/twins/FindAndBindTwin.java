@@ -30,11 +30,10 @@ public class FindAndBindTwin extends FindAndDoTwin implements Follower {
                            String keyName,
                            String label,
                            Executor executor,
-                           TwinID modelDid,
                            Timer shareDataTimer,
                            Duration shareEvery,
                            RetryConf retryConf) {
-        super(api, keyName, label, executor, modelDid, shareDataTimer, shareEvery);
+        super(api, keyName, label, executor, shareDataTimer, shareEvery);
         this.followFutures = new ConcurrentHashMap<>();
         this.retryConf = retryConf;
     }

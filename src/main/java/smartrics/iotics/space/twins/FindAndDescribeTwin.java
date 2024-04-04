@@ -24,11 +24,10 @@ public class FindAndDescribeTwin extends FindAndDoTwin implements Describer {
                                String keyName,
                                String label,
                                Executor executor,
-                               TwinID modelDid,
                                Timer shareDataTimer,
                                Timer describeSchedulerTimer,
                                Duration shareEvery) {
-        super(api, keyName, label, executor, modelDid, shareDataTimer, shareEvery);
+        super(api, keyName, label, executor, shareDataTimer, shareEvery);
         this.schedulerTimer = describeSchedulerTimer;
     }
 

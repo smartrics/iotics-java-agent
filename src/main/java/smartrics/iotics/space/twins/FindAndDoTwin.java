@@ -26,7 +26,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import static smartrics.iotics.space.UriConstants.*;
 import static smartrics.iotics.space.grpc.ListenableFutureAdapter.toCompletable;
 
-public abstract class FindAndDoTwin extends AbstractTwinWithModel implements Publisher, Searcher {
+public abstract class FindAndDoTwin extends AbstractTwin implements Publisher, Searcher {
 
     public static final String COUNTERS_FEED_ID = "counters";
     public static final String RECEIVED_DATA_POINTS = "receivedDataPoints";
@@ -48,10 +48,9 @@ public abstract class FindAndDoTwin extends AbstractTwinWithModel implements Pub
                          String keyName,
                          String label,
                          Executor executor,
-                         TwinID modelDid,
                          Timer shareDataTimer,
                          Duration shareEvery) {
-        super(api, keyName, executor, modelDid);
+        super(api, keyName, executor);
         this.shareEveryMs = shareEvery.getSeconds() * 1000;
         this.gson = new Gson();
         this.label = label;
@@ -162,10 +161,6 @@ public abstract class FindAndDoTwin extends AbstractTwinWithModel implements Pub
                                 .setKey(ON_RDFS_LABEL_PROP)
                                 .setLiteralValue(Literal.newBuilder().setValue(name + " [" +
                                         this.keyName + "][" + this.label + "]").build())
-                                .build())
-                        .addProperties(Property.newBuilder()
-                                .setKey(IOTICS_APP_MODEL_PROP)
-                                .setUriValue(Uri.newBuilder().setValue(getModelDid().getId()).build())
                                 .build())
                         .addProperties(Property.newBuilder()
                                 .setKey(ON_RDF_TYPE_PROP)

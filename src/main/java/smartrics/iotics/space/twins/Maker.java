@@ -44,7 +44,7 @@ public interface Maker extends Identifiable, Describer {
             }
 
             @Override
-            public void onFailure(Throwable thrown) {
+            public void onFailure(@NotNull Throwable thrown) {
                 if ((thrown instanceof StatusRuntimeException sre) && sre.getStatus().getCode() == Status.Code.NOT_FOUND) {
                     Futures.addCallback(maker.make(), makeCallback(future), executor);
                 } else {
@@ -63,7 +63,7 @@ public interface Maker extends Identifiable, Describer {
             }
 
             @Override
-            public void onFailure(Throwable throwable) {
+            public void onFailure(@NotNull Throwable throwable) {
                 future.setException(throwable);
             }
         };
