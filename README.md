@@ -1,3 +1,5 @@
+_This project is now deprecated; see [iotics4j](https://github.com/smartrics/iotics4j) _
+
 # iotics-java-agent
 
 IOTICS agent framework for Java
